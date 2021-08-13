@@ -1,0 +1,32 @@
+.days-image img {
+	max-height: 200px;
+}
+
+.date-today{
+	font-size: 120%;
+	font-weight: bold;
+}
+
+.feast1 {
+	color: red;
+	font-size: 110%;
+	font-weight: bold;
+}
+.feast2 {
+	font-size: 110%;
+	font-weight: bold;
+}
+.feast3 {
+	font-size: 110%;
+	font-weight: bold;
+}
+.feast4 {
+	font-weight: bold;
+}
+.saints p {
+	margin-top: 0;
+	margin-bottom: 0.2em;
+}
+.saints p:first-letter {
+	text-transform: uppercase;
+}
