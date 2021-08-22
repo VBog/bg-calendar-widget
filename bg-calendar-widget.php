@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 1.0
+    Version: 1.1
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '1.0');
+define('BG_CALENDAR_WIDGET_VERSION', '1.1');
 
 define('BG_CALENDAR_WIDGET_LOG', dirname(__FILE__ ).'/bg_calendar_widget.log');
 // Таблица стилей для плагина
@@ -107,13 +107,14 @@ class bgCalendarWidget extends WP_Widget {
 	// Формирование текста календаря
 	private function getAzbykaCalendar () {
 
-//		$date = bg_currentDate();
-		if (isset($_GET["date"])) {		// Задана дата
-			$date = $_GET["date"];
-		} else {
-			$date = date('Y-m-d', time());
+		if (function_exists('bg_currentDate')) $date = bg_currentDate();
+		else {
+			if (isset($_GET["date"])) {		// Задана дата
+				$date = $_GET["date"];
+			} else {
+				$date = date('Y-m-d');
+			}
 		}
-
 		$sufix = [
 			'holidays' => 'prazdnik-',
 			'saints' => 'sv-',
@@ -121,7 +122,7 @@ class bgCalendarWidget extends WP_Widget {
 		];
 
 		$the_key='getCalendar_key_'.$date;
-		if(false===($quote=get_transient($the_key))) {
+//		if(false===($quote=get_transient($the_key))) {
 			
 			$main_feast = array();
 			$feasts = array();
@@ -136,8 +137,8 @@ class bgCalendarWidget extends WP_Widget {
 				$ideograph = 99;
 				$quote1 = '';
 				foreach($data->holidays as $holiday) {
-					if ($holiday->title_genitive) $title = strip_tags($holiday->full_title);
-					else if ($holiday->title) $title = strip_tags($holiday->title);
+					if (!empty($holiday->full_title)) $title = strip_tags($holiday->full_title);
+					elseif (!empty($holiday->title)) $title = strip_tags($holiday->title);
 					else continue;
 					if ($holiday->ideograph) {
 						$symbol ='<img src="'.plugins_url( 'img/S'.$holiday->ideograph.'.gif', __FILE__ ).'" title="'.$feast_type[$holiday->ideograph-1].' праздник" /> ';
@@ -158,23 +159,33 @@ class bgCalendarWidget extends WP_Widget {
 				if ($quote1) $quote .= '<p>'.substr($quote1, 0, -2).'.</p>'; 
 				$quote2 = '';
 				$priority = 0;
+				$group = 0;
 				foreach($data->saints as $saint) {
-					if ($saint->title_genitive) $title = strip_tags($saint->title_genitive);
-					else if ($saint->title) $title = strip_tags($saint->title);
+					if (!empty($saint->title_genitive)) $title = strip_tags($saint->title_genitive);
+					elseif (!empty($saint->title)) $title = strip_tags($saint->title);
 					else continue;
 					if ($saint->type_of_sanctity) $title = strip_tags($saint->type_of_sanctity).' '.$title;
+					if ($saint->prefix) $title = strip_tags($saint->prefix).' '.$title;
 					if ($saint->suffix) $title .= strip_tags($saint->suffix);
 					if ($saint->ideograph) {
-						$symbol ='<img src="'.plugins_url( 'img/S'.$saint->ideograph.'.gif', __FILE__ ).'" title="'.$feast_type[$saint->ideograph-1].' праздник" /> ';
+						if (!$saint->group || $group != $saint->group) {
+							$symbol = '<img src="'.plugins_url( 'img/S'.$saint->ideograph.'.gif', __FILE__ ).'" title="'.$feast_type[$saint->ideograph-1].' праздник" /> ';
+							$group = $saint->group;
+						} else { 
+							$symbol = '';
+						}
 						$name = '<span class="feast'.$saint->ideograph.'">'.$title.'</span>';
 					} else {
+						if (!$saint->group || $group != $saint->group)	$group = $saint->group;
 						$symbol ='';
 						$name = $title;
 					}
-					if ($quote2 && $priority < $saint->priority) {
-						$quote .= '<p>'.substr($quote2, 0, -2).'.</p>'; 
+					if ($priority < $saint->priority) {
 						$priority = $saint->priority;
-						$quote2 = '';
+						if ($quote2) {
+							$quote .= '<p>'.substr($quote2, 0, -2).'.</p>'; 
+							$quote2 = '';
+						}
 					}
 					$quote2 .= $symbol.'<a title="'. $title .'" href="https://azbyka.ru/days/sv-'. $saint->uri .'" target="_blank" rel="noopener">'.$name.'</a>, ';
 					
@@ -188,11 +199,9 @@ class bgCalendarWidget extends WP_Widget {
 				if ($quote2) $quote .= '<p>'.substr($quote2, 0, -2).'.</p>'; 
 				$quote3 = '';
 				foreach($data->ikons as $ikon) {
-					if ($ikon->title_genitive) $title = strip_tags($ikon->clean_title);
-					else if ($ikon->title) $title = strip_tags($ikon->title);
+					if (!empty($ikon->clean_title)) $title = strip_tags($ikon->clean_title);
+					elseif (!empty($ikon->title)) $title = strip_tags($ikon->title);
 					else continue;
-					if ($ikon->type_of_sanctity) $title = strip_tags($ikon->type_of_sanctity).' '.$title;
-					if ($ikon->suffix) $title .= strip_tags($ikon->suffix);
 					if ($ikon->ideograph) {
 						$symbol ='<img src="'.plugins_url( 'img/S'.$ikon->ideograph.'.gif', __FILE__ ).'" title="'.$feast_type[$ikon->ideograph-1].' праздник" /> ';
 						$name = '<span class="feast'.$ikon->ideograph.'">иконы Богородицы '.$title.'</span>';
@@ -229,16 +238,20 @@ class bgCalendarWidget extends WP_Widget {
 					$image .= '</div>';
 				}
 				list($y,$m,$d) = explode ('-', $date);
+				$wd = date("N",strtotime($date)); 
+				
+				$weekday = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','<span>Воскресенье</span>'];
 				$monthes = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 				$image .= '<div class="date-today">';
-					$image .= '<a href="https://azbyka.ru/days/'. $date .'">'. (int) $d .' '. $monthes[$m-1] .' '. $y .'г.</a>';
+					$image .= '<a href="https://azbyka.ru/days/'. $date .'"'.(($wd==7)?' style="color:red"':"").'>'. $weekday[$wd-1] .',<br>'. (int) $d .' '. $monthes[$m-1] .' '. $y .'г.</a><br>';
+					$image .= '<span class="round_week">'.strip_tags($data->fasting->round_week).'</span>';
 				$image .= '</div>';
 				
 				
 				$quote = '<h3 class="saints-title"><a href="/days/" title="Православный календарь" target="_blank" rel="noopener">Православный календарь</a></h3>'.$image.$quote;
 			}	
 			set_transient( $the_key, $quote,  60*MINUTE_IN_SECONDS );
-		}
+//		}
 		return $quote;
 	}
 }

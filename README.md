@@ -52,5 +52,8 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 ## Changelog ##
 
+= 1.1 =
+* Добавлены день недели и название недели
+
 = 1.0 =
 * Initial release
