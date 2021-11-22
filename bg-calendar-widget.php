@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 1.1
+    Version: 1.2
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '1.1');
+define('BG_CALENDAR_WIDGET_VERSION', '1.2');
 
 define('BG_CALENDAR_WIDGET_LOG', dirname(__FILE__ ).'/bg_calendar_widget.log');
 // Таблица стилей для плагина
@@ -141,7 +141,7 @@ class bgCalendarWidget extends WP_Widget {
 					elseif (!empty($holiday->title)) $title = strip_tags($holiday->title);
 					else continue;
 					if ($holiday->ideograph) {
-						$symbol ='<img src="'.plugins_url( 'img/S'.$holiday->ideograph.'.gif', __FILE__ ).'" title="'.$feast_type[$holiday->ideograph-1].' праздник" /> ';
+						$symbol ='<img src="'.plugins_url( 'img/S'.$holiday->ideograph.'.gif', __FILE__ ).'" title="'.$feast_type[$holiday->ideograph-1].' праздник" />&nbsp;';
 						$name = '<span class="feast'.$holiday->ideograph.'">'.$title.'</span>';
 					} else {
 						$symbol ='';
@@ -169,7 +169,7 @@ class bgCalendarWidget extends WP_Widget {
 					if ($saint->suffix) $title .= strip_tags($saint->suffix);
 					if ($saint->ideograph) {
 						if (!$saint->group || $group != $saint->group) {
-							$symbol = '<img src="'.plugins_url( 'img/S'.$saint->ideograph.'.gif', __FILE__ ).'" title="'.$feast_type[$saint->ideograph-1].' праздник" /> ';
+							$symbol = '<img src="'.plugins_url( 'img/S'.$saint->ideograph.'.gif', __FILE__ ).'" title="'.$feast_type[$saint->ideograph-1].' праздник" />&nbsp;';
 							$group = $saint->group;
 						} else { 
 							$symbol = '';
@@ -203,7 +203,7 @@ class bgCalendarWidget extends WP_Widget {
 					elseif (!empty($ikon->title)) $title = strip_tags($ikon->title);
 					else continue;
 					if ($ikon->ideograph) {
-						$symbol ='<img src="'.plugins_url( 'img/S'.$ikon->ideograph.'.gif', __FILE__ ).'" title="'.$feast_type[$ikon->ideograph-1].' праздник" /> ';
+						$symbol ='<img src="'.plugins_url( 'img/S'.$ikon->ideograph.'.gif', __FILE__ ).'" title="'.$feast_type[$ikon->ideograph-1].' праздник" />&nbsp;';
 						$name = '<span class="feast'.$ikon->ideograph.'">иконы Богородицы '.$title.'</span>';
 					} else {
 						$symbol ='';
@@ -233,7 +233,10 @@ class bgCalendarWidget extends WP_Widget {
 				if (!empty($main_feast->imgs)) {
 					$image = '<div class="days-image">';
 						$image .= '<a title="'. $main_feast->title .'" href="https://azbyka.ru/days/'. $sufix[$main_feast->type].$main_feast->uri .'" target="_blank" rel="noopener">';
-							$image .= '<img alt="'. $main_feast->title .'" src="https://azbyka.ru/days/assets/img/'. $main_feast->type.'/'.$main_feast->id.'/'.$main_feast->imgs[0]->image .'">';
+							if ($main_feast->type == 'ikons')
+								$image .= '<img alt="'. $main_feast->title .'" src="https://azbyka.ru/days/assets/img/icons/'.$main_feast->id.'/'.$main_feast->imgs[0]->img .'">';
+							else 
+								$image .= '<img alt="'. $main_feast->title .'" src="https://azbyka.ru/days/assets/img/'. $main_feast->type.'/'.$main_feast->id.'/'.$main_feast->imgs[0]->image .'">';
 						$image .= '</a>';
 					$image .= '</div>';
 				}
