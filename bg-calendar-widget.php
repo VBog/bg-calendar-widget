@@ -144,7 +144,7 @@ class bgCalendarWidget extends WP_Widget {
 		];
 
 		$the_key='getCalendar_key_'.$date;
-//		if(false===($quote=get_transient($the_key))) {
+		if(false===($quote=get_transient($the_key))) {
 			
 			$main_feast = array();
 			$feasts = array();
@@ -342,7 +342,7 @@ class bgCalendarWidget extends WP_Widget {
 					 '<div class="saints">'.$quote.'</div>';
 
 			set_transient( $the_key, $quote, 60*MINUTE_IN_SECONDS );
-//		}
+		}
 		return $quote;
 	}
 }
