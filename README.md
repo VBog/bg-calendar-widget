@@ -19,7 +19,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 Здесь: `YYYY` - год, `MM` - месяц, `DD` - день. (Ведущие нули обязательны!).
 
-Виджет получает данные для календаря с помощью API Календаря "Азбука веры": `https://azbyka.ru/daiys/api/day/YYYY-MM-DD.json`
+Виджет получает данные для календаря с помощью API Календаря "Азбука веры": `https://azbyka.ru/daiys/api/day/YYYY-MM-DD|tropary.json`
 		
 В качестве иконы дня выводится икона наиболее значимого (по Типикону) праздника дня.
 
@@ -42,7 +42,13 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 * `div.days-image` - стиль контейнера с изображением иконы,
 
-* `div.date-today` - стиль даты,
+* `div.date-today` - стиль контейнера даты,
+
+* `.week_day` - стиль даты,
+
+* `.round_week` - Седмицы/Недели,
+
+* `.prefeast` - стиль пред-/попразднство,
 
 * `div.saints` - стиль контейнера с событиями календаря,
 
@@ -51,6 +57,9 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 
 ## Changelog ##
+
+= 2.0 =
+* Переработан алгоритм
 
 = 1.2 =
 * Изменилось имя папки хранения икон

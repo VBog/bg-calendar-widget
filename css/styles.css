@@ -1,9 +1,18 @@
+.widget .saints-title{
+	font-weight:bold;
+}
+
 .days-image img {
 	max-height: 200px;
 }
 
-.date-today{
+.week_day,  
+.round_week {
 	font-size: 120%;
+	font-weight: bold;
+}
+.prefeast {
+	font-size: 100%;
 	font-weight: bold;
 }
 
@@ -29,4 +38,53 @@
 }
 .saints p:first-letter {
 	text-transform: uppercase;
+}
+
+.widget_bg_calendar_widget{
+	position: relative;
+}
+
+.widget_bg_calendar_widget .btn-info{
+	bottom: 0.25rem;
+    position: absolute;
+    right: 0.5rem;
+}
+.widget_bg_calendar_widget .btn-info .fa{
+	cursor:pointer;
+}
+.widget_bg_calendar_widget .btn-info-inner{
+	display:none;
+	position: absolute;
+	top: 100%;
+	right:0;
+	width: 14rem;
+	border:1px solid #6b4f38;
+	background-color:#6b4f38;
+	border-radius:5px;
+	padding:10px;
+	color: #fff;
+}
+.widget_bg_calendar_widget .btn-info-inner a,
+.widget_bg_calendar_widget .btn-info-inner a:visited{
+	color: #ffff33;
+}
+.widget_bg_calendar_widget .btn-info-inner a:hover,
+.widget_bg_calendar_widget .btn-info-inner a:visited:hover{
+	color: #ffff00;
+}
+
+@media (hover:none){
+	.widget_bg_calendar_widget .btn-info-checkbox:checked+.btn-info-inner{
+		display:inline-block;
+	}
+}
+
+@media(hover:hover){
+	.widget_bg_calendar_widget .btn-info:hover .btn-info-inner{
+		display:inline-block;
+	}
+}
+
+.widget_bg_calendar_widget .btn-info-checkbox{
+	appearance: none;
 }
