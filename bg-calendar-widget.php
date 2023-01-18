@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 2.0
+    Version: 2.1
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,9 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '2.0');
+define('BG_CALENDAR_WIDGET_VERSION', '2.1');
+
+define('BG_CALENDAR_WIDGET_DEBUG', false);
 
 define('BG_CALENDAR_WIDGET_LOG', dirname(__FILE__ ).'/bg_calendar_widget.log');
 // Таблица стилей для плагина
@@ -144,7 +146,7 @@ class bgCalendarWidget extends WP_Widget {
 		];
 
 		$the_key='getCalendar_key_'.$date;
-		if(false===($quote=get_transient($the_key))) {
+		if(false===($quote=get_transient($the_key)) || BG_CALENDAR_WIDGET_DEBUG) {
 			
 			$main_feast = array();
 			$feasts = array();
@@ -174,6 +176,8 @@ class bgCalendarWidget extends WP_Widget {
 					$event->url = 'https://azbyka.ru/days/prazdnik-'. $holiday->uri;
 					$event->imgs = $holiday->imgs;		
 
+					
+					
 					switch ($holiday->subtype) {
 						case 'sunday':
 							$event->type = 'special';
@@ -207,7 +211,12 @@ class bgCalendarWidget extends WP_Widget {
 						break;
 
 						default:
-							$events[] = $event;
+							if (str_starts_with($event->title, 'Навече́рие')) {
+								$event->type = 'eve';
+								$event->ideograph = 8;				
+								$prefeast_event = $event;
+							}
+							else $events[] = $event;
 					}
 				}
 
@@ -297,10 +306,12 @@ class bgCalendarWidget extends WP_Widget {
 			
 		// Икона дня
 			if (isset($instance['icon']) && $instance['icon'] ) {
-				foreach ($events as $event) {
+				$allevents = $events;
+				array_unshift($allevents, $special_event, $prefeast_event);
+				foreach ($allevents as $event) {
 					if (!empty($event->imgs)) {
 						$image = '<div class="days-image">';
-							$image .= '<a title="'. $event->title .'" href="https://azbyka.ru/days/'. $sufix[$event->type].$event->uri .'" target="_blank" rel="noopener">';
+							$image .= '<a title="'. $event->title .'" href="'. $event->url .'" target="_blank" rel="noopener">';
 							$image.= '<img src="'.$event->imgs[0]->preview_absolute_url.'" alt="'.$event->title.'">';
 							$image .= '</a>';
 						$image .= '</div>';
@@ -310,9 +321,9 @@ class bgCalendarWidget extends WP_Widget {
 			}
 		// Дата
 			$image .= '<span class="week_day"><a href="https://azbyka.ru/days/'. $date .'"'.(($wd==7)?' style="color:red"':"").'>'. $weekday[$wd-1] .',<br>'. (int) $d .' '. $monthes[$m-1] .' '. $y .'г.</a></span><br>';
-			if (!empty($special_event))	$image .= '<span class="round_week">'.$special_event->title.'</span>';	
+			if (!empty($special_event))	$image .= '<span class="round_week"><a title="'. $special_event->title .'" href="'. $special_event->url .'" target="_blank" rel="noopener">'.$special_event->title.'</a></span>';	
 			else $image .= '<span class="round_week">'.strip_tags($data->fasting->round_week).'</span>';
-			if (!empty($prefeast_event)) $image .= '<p class="prefeast">'.strip_tags($prefeast_event->title).'</p>';
+			if (!empty($prefeast_event)) $image .= '<p class="prefeast"><a title="'. $prefeast_event->title .'" href="'. $prefeast_event->url .'" target="_blank" rel="noopener">'.strip_tags($prefeast_event->title).'</a></p>';
 			
 		// Список праздников и святых
 			$priority = 0;
