@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 2.1.1
+    Version: 2.1.2
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '2.1.1');
+define('BG_CALENDAR_WIDGET_VERSION', '2.1.2');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -146,7 +146,7 @@ class bgCalendarWidget extends WP_Widget {
 		];
 
 		$the_key='getCalendar_key_'.$date;
-		if(false===($quote=get_transient($the_key)) || BG_CALENDAR_WIDGET_DEBUG) {
+//		if(false===($quote=get_transient($the_key)) || BG_CALENDAR_WIDGET_DEBUG) {
 			
 			$main_feast = array();
 			$feasts = array();
@@ -355,7 +355,7 @@ class bgCalendarWidget extends WP_Widget {
 
 		//Чтения дня
 			if(isset($instance['readings']) && $instance['readings'] && !empty($data->texts)){
-				$quote .= '<hr>'.$data->texts[0]->text.'<label class="btn-info"><input type="checkbox" class="btn-info-checkbox"><span class="btn-info-inner"><b>Чтения Св. Писания на богослужениях</b><br>Зач. - № <a href="https://azbyka.ru/zachala" target="_blank">зачала</a><br>Утр. - на <a href="https://azbyka.ru/utrenya" target="_blank">Утрени</a>.<br>Лит. - на <a href="https://azbyka.ru/liturgiya" target="_blank">Литургии</a>.</span><i class="fa fa-question-circle"></i></label>';
+				$quote .= '<hr>'.strip_tags($data->texts[0]->text,'<p><a><b><strong><i><em><br>').'<label class="btn-info"><input type="checkbox" class="btn-info-checkbox"><span class="btn-info-inner"><b>Чтения Св. Писания на богослужениях</b><br>Зач. - № <a href="https://azbyka.ru/zachala" target="_blank">зачала</a><br>Утр. - на <a href="https://azbyka.ru/utrenya" target="_blank">Утрени</a>.<br>Лит. - на <a href="https://azbyka.ru/liturgiya" target="_blank">Литургии</a>.</span><i class="fa fa-question-circle"></i></label>';
 			}
 			
 			$quote = '<div class="widget-title saints-title"><a href="/days/" title="Православный календарь" target="_blank" rel="noopener">Православный календарь</a></div>'.
@@ -363,7 +363,7 @@ class bgCalendarWidget extends WP_Widget {
 					 '<div class="saints">'.$quote.'</div>';
 
 			set_transient( $the_key, $quote, 60*MINUTE_IN_SECONDS );
-		}
+//		}
 		return $quote;
 	}
 }
