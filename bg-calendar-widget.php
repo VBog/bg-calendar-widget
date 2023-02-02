@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 2.2
+    Version: 2.3
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '2.2');
+define('BG_CALENDAR_WIDGET_VERSION', '2.3');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -98,6 +98,8 @@ class bgCalendarWidget extends WP_Widget {
 			<label><input type="checkbox" id="<?php echo $this->get_field_id( 'icon' ); ?>" name="<?php echo $this->get_field_name( 'icon' ); ?>"<?php echo ( isset($instance['icon']) && $instance['icon'] ) ? ' checked' : '' ?>> Икона </label>
 			<span>&nbsp;</span>
 			<label><input type="checkbox" id="<?php echo $this->get_field_id( 'readings' ); ?>" name="<?php echo $this->get_field_name( 'readings' ); ?>"<?php echo ( isset($instance['readings']) && $instance['readings'] ) ? ' checked' : '' ?>> Чтения </label>
+			<span>&nbsp;</span>
+			<label><input type="checkbox" id="<?php echo $this->get_field_id( 'links' ); ?>" name="<?php echo $this->get_field_name( 'links' ); ?>"<?php echo ( isset($instance['links']) && $instance['links'] ) ? ' checked' : '' ?>> Ссылки </label>
 		</p>
 		<?php 
 	}
@@ -108,6 +110,7 @@ class bgCalendarWidget extends WP_Widget {
 		$instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
 		$instance['icon'] = isset($new_instance['icon']) ? filter_var( $new_instance['icon'], FILTER_VALIDATE_BOOLEAN ) : false;
 		$instance['readings'] = isset($new_instance['readings']) ? filter_var( $new_instance['readings'], FILTER_VALIDATE_BOOLEAN ) : false;
+		$instance['links'] = isset($new_instance['links']) ? filter_var( $new_instance['links'], FILTER_VALIDATE_BOOLEAN ) : false;
 		
 		delete_transient('getCalendar_key_'.date('Y-m-d'));
 		
@@ -363,6 +366,18 @@ class bgCalendarWidget extends WP_Widget {
 				$quote .= '<hr>'.$preparedText.'<label class="btn-info"><input type="checkbox" class="btn-info-checkbox"><span class="btn-info-inner"><b>Чтения Св. Писания на богослужениях</b><br>Зач. - № <a href="https://azbyka.ru/zachala" target="_blank">зачала</a><br>Утр. - на <a href="https://azbyka.ru/utrenya" target="_blank">Утрени</a>.<br>Лит. - на <a href="https://azbyka.ru/liturgiya" target="_blank">Литургии</a>.</span><i class="fa fa-question-circle"></i></label>';
 			}
 			
+		// Ссылки на богослужебные книги
+			if (isset($instance['links']) && $instance['links'] ) {
+				$mantle = array("janvar","fevral","mart","aprel","maj","iyun","iyul","avgust","sentjabr","oktjabr","nojabr","dekabr");
+				$tip48 = array(5,6,7,8,9,10,11,12,1,2,3,4);
+				$quote .= '<hr><a class="hlink" href="https://azbyka.ru/bogosluzhebnye-ukazaniya?date='.$y.'-'.$m.'-'.$d.'" target="_blank">Богослужебные указания ►</a>';
+				$quote .= ' <a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/tipikon/48_'.$tip48[$m-1].'" target="_blank">Типикон ►</a>';
+				$quote .= ' <a class="calVoice hlink" target="_blank" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/'.$this->worships($date).' Глас '.$this->getVoice($date).' ►</a>';
+				// Минея
+				if (!empty($mantle[$old_m-1])) 
+					$quote .= ' <a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/mineja-'.$mantle[$old_m-1].'/'.$old_d.'" target="_blank">Минея, '.$old_d.' '.$monthes[$old_m-1].' ►</a>';
+			}
+			
 			$quote = '<div class="widget-title saints-title"><a href="/days/" title="Православный календарь" target="_blank" rel="noopener">Православный календарь</a></div>'.
 					 '<div class="date-today">'.$image.'</div>'.
 					 '<div class="saints">'.$quote.'</div>';
@@ -371,6 +386,102 @@ class bgCalendarWidget extends WP_Widget {
 		}
 		return $quote;
 	}
+	
+	
+
+	/*******************************************************************************
+		Функция возвращает ссылки на службы в течение года
+		Параметры:
+			$date - дата в формате Y-m-d
+	*******************************************************************************/  
+	private function worships ($date) {
+		$diff = $this->easter_diff($date);
+		$wd = date("N",strtotime($date))+0; 
+		$w = date("w",strtotime($date))+1; 
+		$voice = $this->getVoice($date);
+		
+	// Постная триодь
+		if ($diff ==  -70) {			// Неделя о мытаре и фарисее
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_1">Постная триодь. ';
+		} else if ($diff ==  -63) {	// Неделя о блудном сыне
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_5">Постная триодь. ';
+		} else if ($diff ==  -57) {	// В субботу мясопустную
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_9">Постная триодь. ';
+		} else if ($diff ==  -56) {	// Неделя мясопустная
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_13">Постная триодь. ';
+		} else if ($diff ==  -50) {	// В субботу сырную
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_17">Постная триодь. ';
+		} else if ($diff ==  -49) {	// В неделю сыропустную
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_21">Постная триодь. ';
+		} else if ($diff < -49) {	// Предуготовительные седмицы
+			return 'oktoih/'.($voice+1).'">Октоих. ';
+		} else if ($diff < -41) {	// Великий пост 1-я седмица
+			return 'sluzhby-pervoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+		} else if ($diff < -34) {	// Великий пост 2-я седмица
+			return 'sluzhby-vtoroj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+		} else if ($diff < -27) {	// Великий пост 3-я седмица
+			return 'sluzhby-tretej-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+		} else if ($diff < -20) {	// Великий пост 4-я седмица
+			return 'sluzhby-chetvertoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+		} else if ($diff < -13) {	// Великий пост 5-я седмица
+			return 'sluzhby-pjatoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+		} else if ($diff < -6) {		// Великий пост 6-я седмица
+			return 'sluzhby-shestoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+		} else if ($diff < 0) {		// Великий пост страстная седмица
+			return 'sluzhby-strastnoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+
+	// Цветная триодь
+		} else if ($diff < 7) {		// Светлая седмица
+			return 'sluzhby-svetloj-sedmitsy/'.$w.'">Цветная триодь. ';
+		} else if ($diff < 14) {		// 2-я седмица по Пасхе
+			return '/sluzhby-vtoroj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+		} else if ($diff < 21) {		// 3-я седмица по Пасхе
+			return 'sluzhby-tretej-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+		} else if ($diff < 28) {		// 4-я седмица по Пасхе
+			return 'sluzhby-chetvertoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+		} else if ($diff < 35) {		// 5-я седмица по Пасхе
+			return 'sluzhby-pjatoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+		} else if ($diff < 42) {		// 6-я седмица по Пасхе
+			return 'sluzhby-shestoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+		} else if ($diff < 49) {		// 7-я седмица по Пасхе
+			return 'sluzhby-sedmoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+		} else if ($diff < 56) {		// 8-я седмица по Пасхе
+			return 'sluzhby-vosmoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+		} else if ($diff ==  56) {	// День всех Святых
+			return 'sluzhby-vosmoj-sedmitsy-po-pashe/8">Цветная триодь. ';
+
+	// Октоих 
+		} else {
+			return 'oktoih/'.($voice+1).'">Октоих. ';
+		}
+	}
+
+	/*******************************************************************************
+		Функция возвращает глас по Октоиху для указанной даты
+		Параметры:
+			$date - дата в формате Y-m-d
+	*******************************************************************************/  
+	private function getVoice($date) {
+		list($year, $m, $d) = explode ('-', $date);
+		$num = $this->easter_diff($date, $year);
+		if ($num < 0) {									// Если дата раньше Пасхи этого года,
+			$num = $this->easter_diff($date, $year-1);	// то отсчитываем от предыдущей Пасхи
+		}
+		if ($num < 7) $voice = $num+1;
+		else $voice = floor(($num-7)/7)%8+1;
+		return $voice;
+	}
+	/*******************************************************************************
+		Функция возвращает количество дней между Пасхой и указанной датой по новому стилю
+		Параметры:
+			$date - дата в формате Y-m-d
+	*******************************************************************************/  
+	private function easter_diff($date, $year=0) {
+		if (!$year) list($year, $m, $d) = explode ('-', $date);
+		$interval = date_diff(date_create(bg_get_easter($year)), date_create($date));
+		return (int)$interval->format('%R%a');
+	}
+
 }
  
 /*****************************************************************************************

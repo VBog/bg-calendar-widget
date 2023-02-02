@@ -58,6 +58,9 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 ## Changelog ##
 
+= 2.3 =
+* Добавлены ссылки на богослужебные книги
+
 = 2.2 =
 * Дата по старому стилю
 
