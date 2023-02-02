@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 2.1.2
+    Version: 2.2
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '2.1.2');
+define('BG_CALENDAR_WIDGET_VERSION', '2.2');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -138,6 +138,10 @@ class bgCalendarWidget extends WP_Widget {
 		
 		list($y,$m,$d) = explode ('-', $date);
 		$wd = date("N",strtotime($date)); 
+		$dd = ($y-$y%100)/100 - ($y-$y%400)/400 - 2;
+		$old = date("Y-m-d",strtotime ($date.' - '.$dd.' days')) ;
+		list($old_y,$old_m,$old_d) = explode ('-', $old);
+		
 			
 		$sufix = [
 			'holidays' => 'prazdnik-',
@@ -146,7 +150,7 @@ class bgCalendarWidget extends WP_Widget {
 		];
 
 		$the_key='getCalendar_key_'.$date;
-//		if(false===($quote=get_transient($the_key)) || BG_CALENDAR_WIDGET_DEBUG) {
+		if(false===($quote=get_transient($the_key)) || BG_CALENDAR_WIDGET_DEBUG) {
 			
 			$main_feast = array();
 			$feasts = array();
@@ -331,6 +335,7 @@ class bgCalendarWidget extends WP_Widget {
 			}
 		// Дата
 			$image .= '<span class="week_day"><a href="https://azbyka.ru/days/'. $date .'"'.(($wd==7)?' style="color:red"':"").'>'. $weekday[$wd-1] .',<br>'. (int) $d .' '. $monthes[$m-1] .' '. $y .'г.</a></span><br>';
+			$image .= '('.(int) $old_d .' '. $monthes[$old_m-1] .' ст.ст.)<br>';
 			if (!empty($special_event))	$image .= '<span class="round_week"><a title="'. $special_event->title .'" href="'. $special_event->url .'" target="_blank" rel="noopener">'.$special_event->title.'</a></span>';	
 			else $image .= '<span class="round_week">'.strip_tags($data->fasting->round_week).'</span>';
 			if (!empty($prefeast_event)) $image .= '<p class="prefeast"><a title="'. $prefeast_event->title .'" href="'. $prefeast_event->url .'" target="_blank" rel="noopener">'.strip_tags($prefeast_event->title).'</a></p>';
@@ -354,8 +359,8 @@ class bgCalendarWidget extends WP_Widget {
 			if ($paragraph) $quote .= '<p>'.substr($paragraph, 0, -2).'.</p>'; 
 
 		//Чтения дня
-			if(isset($instance['readings']) && $instance['readings'] && !empty($data->texts)){
-				$quote .= '<hr>'.strip_tags($data->texts[0]->text,'<p><a><b><strong><i><em><br>').'<label class="btn-info"><input type="checkbox" class="btn-info-checkbox"><span class="btn-info-inner"><b>Чтения Св. Писания на богослужениях</b><br>Зач. - № <a href="https://azbyka.ru/zachala" target="_blank">зачала</a><br>Утр. - на <a href="https://azbyka.ru/utrenya" target="_blank">Утрени</a>.<br>Лит. - на <a href="https://azbyka.ru/liturgiya" target="_blank">Литургии</a>.</span><i class="fa fa-question-circle"></i></label>';
+			if(isset($instance['readings']) && $instance['readings'] && !empty($data->texts) && !empty($preparedText = strip_tags($data->texts[0]->text,'<p><b><strong><i><em><a><br>'))){
+				$quote .= '<hr>'.$preparedText.'<label class="btn-info"><input type="checkbox" class="btn-info-checkbox"><span class="btn-info-inner"><b>Чтения Св. Писания на богослужениях</b><br>Зач. - № <a href="https://azbyka.ru/zachala" target="_blank">зачала</a><br>Утр. - на <a href="https://azbyka.ru/utrenya" target="_blank">Утрени</a>.<br>Лит. - на <a href="https://azbyka.ru/liturgiya" target="_blank">Литургии</a>.</span><i class="fa fa-question-circle"></i></label>';
 			}
 			
 			$quote = '<div class="widget-title saints-title"><a href="/days/" title="Православный календарь" target="_blank" rel="noopener">Православный календарь</a></div>'.
@@ -363,7 +368,7 @@ class bgCalendarWidget extends WP_Widget {
 					 '<div class="saints">'.$quote.'</div>';
 
 			set_transient( $the_key, $quote, 60*MINUTE_IN_SECONDS );
-//		}
+		}
 		return $quote;
 	}
 }

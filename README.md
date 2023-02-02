@@ -58,6 +58,9 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 ## Changelog ##
 
+= 2.2 =
+* Дата по старому стилю
+
 = 2.1 =
 * Небольшие уточнения
 
