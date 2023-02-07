@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 2.3
+    Version: 2.3.1
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '2.3');
+define('BG_CALENDAR_WIDGET_VERSION', '2.3.1');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -233,13 +233,14 @@ class bgCalendarWidget extends WP_Widget {
 
 					$event = (object)array();
 					// Название
-					if (!empty($saint->title_genitive)) $title = strip_tags($saint->title_genitive);
-					elseif (!empty($saint->title)) $title = strip_tags($saint->title);
+					if (!empty($saint->title_genitive)) $title = trim(strip_tags($saint->title_genitive));
+					elseif (!empty($saint->title)) $title = trim(strip_tags($saint->title));
 					else continue;
 					
-					if ($saint->prefix) $title = strip_tags($saint->prefix).' '.$title;
-					elseif ($saint->type_of_sanctity) $title = strip_tags($saint->type_of_sanctity).' '.$title;
-					if ($saint->suffix) $title .= ' '.strip_tags($saint->suffix);
+					if ($saint->suffix) $title .= (($saint->suffix[0] == ',')?'':' ').trim(strip_tags($saint->suffix));
+			
+					if ($saint->prefix) $title = trim(strip_tags(mb_strtolower($saint->prefix))).' '.$title;
+					elseif ($saint->type_of_sanctity) $title = trim(strip_tags($saint->type_of_sanctity)).' '.$title;
 					
 					// Имя
 					$name = strip_tags($saint->name);
@@ -252,11 +253,12 @@ class bgCalendarWidget extends WP_Widget {
 					$key = array_search($saint->group, array_column($events, 'group'));
 					if ($saint->group && $key !== false) {
 						$url = 'https://azbyka.ru/days/sv-'. $saint->uri;
-						$line = '<span class="feast'.$saint->ideograph.'"><a title="'. $saint->title .'" href="'. $url .'" target="_blank" rel="noopener">'.$saint->title.'</a></span>';
-						$union = (!empty($events[$key]->union))?($events[$key]->union):',';
-						$events[$key]->title .= ' '.$union.' '.$title;
-						$events[$key]->name .= ' '.$union.' '.$name;
-						$events[$key]->line .= ' '.$union.' '.$line;
+						$line = '<span class="feast'.$saint->ideograph.'"><a title="'. $saint->title .'" href="'. $url .'" target="_blank" rel="noopener">'.$title.'</a></span>';
+						$union = (!empty($events[$key]->union))?trim($events[$key]->union):',';
+						if ($union[0] != ',') $union = ' '. $union;
+						$events[$key]->title .= $union.' '.$title;
+						$events[$key]->name .= $union.' '.$name;
+						$events[$key]->line .= $union.' '.$line;
 						// Список всех ID группы
 						$event->id .= ',s'. $saint->id;
 						// Если в группе разные лики святости, то принимаем общее название по первому святому в группе
@@ -285,7 +287,7 @@ class bgCalendarWidget extends WP_Widget {
 					$event->feast_type = 'saint';
 					$event->url = 'https://azbyka.ru/days/sv-'. $saint->uri;
 					$event->imgs = $saint->imgs;		
-					$event->line = '<span class="feast'.$event->ideograph.'"><a title="'. $event->title .'" href="'. $event->url .'" target="_blank" rel="noopener">'.$event->title.'</a></span>';
+					$event->line = '<span class="feast'.$event->ideograph.'"><a title="'. $saint->title .'" href="'. $saint->url .'" target="_blank" rel="noopener">'.$event->title.'</a></span>';
 					
 					$events[] = $event;
 				}
