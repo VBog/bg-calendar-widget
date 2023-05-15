@@ -21,7 +21,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 Виджет получает данные для календаря с помощью API Календаря: `https://azbyka.ru/worships/calendar/api/YYYY-MM-DD/`
 		
-#Элементы Календаря#
+### Элементы Календаря ###
 
 1. Икона дня
 2. Список событий
