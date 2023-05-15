@@ -225,7 +225,7 @@ class bgCalendarWidget extends WP_Widget {
 		<?php
 	// Тип литургии 
 		$liturgy = [_("Нет литургии.") ,_("Литургия свт. Иоанна Златоуста."), _("Литургия свт. Василия Великого."), _("Литургия Преждеосвященных Даров.")];
-		echo '<h5>'.$liturgy[$data['liturgy']].'</h5>';
+		echo '<i>'.$liturgy[$data['liturgy']].'</i>';
 
 	// Список чтений дня
 		// Праздники
@@ -309,16 +309,18 @@ class bgCalendarWidget extends WP_Widget {
 		if (isset($instance['links']) && $instance['links'] ) :
 		$mantle = array("janvar","fevral","mart","aprel","maj","iyun","iyul","avgust","sentjabr","oktjabr","nojabr","dekabr");
 		$tip48 = array(5,6,7,8,9,10,11,12,1,2,3,4);
-		$month = array("ианнуарий", "февруарий", "март", "априлий", "маий", "иуний", "иулий", "август", "септемврий", "октоврий", "ноемврий", "декемврий");
+		$wday = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+		$old_d = (int) $old_d;
+		$old_m = (int) $old_m;
 		?>
 		<div class='links'>
 			<hr>
-			<a class="hlink" href="https://azbyka.ru/bogosluzhebnye-ukazaniya?date=<?php echo $date; ?>" target="_blank">Богослужебные указания ►</a>
-			<a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/tipikon/48_<?php echo $tip48[$old_m-1]; ?>" target="_blank">Типикон, <?php echo $month[$old_m-1]; ?>  ►</a>
-			<a class="calVoice hlink" target="_blank" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/<?php echo $this->worships($date); ?> ►</a>
+			<a class="hlink" href="https://azbyka.ru/bogosluzhebnye-ukazaniya?date=<?php echo $date; ?>" target="_blank">Богослужебные указания&nbsp;►</a>
+			<a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/tipikon/48/#48_<?php echo $tip48[$old_m-1].'_'.$old_d; ?>" target="_blank">Типикон, <?php echo $old_d.'&nbsp;'.$monthes[$old_m-1]; ?>&nbsp;►</a>
+			<a class="calVoice hlink" target="_blank" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/<?php echo $this->worships($date).', '.$wday[$wd-1]; ?>&nbsp;►</a>
 			
 			<?php if (!empty($mantle[$old_m-1])) { ?>
-				<a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/mineja-<?php echo $mantle[$old_m-1].'/'.$old_d; ?>" target="_blank">Минея, <?php echo $old_d.' '.$monthes[$old_m-1]; ?> (ст.ст.) ►</a>
+				<a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/mineja-<?php echo $mantle[$old_m-1].'/'.$old_d; ?>" target="_blank">Минея, <?php echo $old_d.'&nbsp;'.$monthes[$old_m-1]; ?>&nbsp;►</a>
 			<?php } ?>
 		</div>
 		<?php	
@@ -615,17 +617,17 @@ class bgCalendarWidget extends WP_Widget {
 		} else if ($diff < -49) {	// Предуготовительные седмицы
 			return 'oktoih/'.($voice+1).'">Октоих. Глас '.$this->getVoice($date);
 		} else if ($diff < -41) {	// Великий пост 1-я седмица
-			return 'sluzhby-pervoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 1 седмица';
+			return 'sluzhby-pervoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 1&nbsp;седмица';
 		} else if ($diff < -34) {	// Великий пост 2-я седмица
-			return 'sluzhby-vtoroj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 2 седмица';
+			return 'sluzhby-vtoroj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 2&nbsp;седмица';
 		} else if ($diff < -27) {	// Великий пост 3-я седмица
-			return 'sluzhby-tretej-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 3 седмица';
+			return 'sluzhby-tretej-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 3&nbsp;седмица';
 		} else if ($diff < -20) {	// Великий пост 4-я седмица
-			return 'sluzhby-chetvertoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 4 седмица';
+			return 'sluzhby-chetvertoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 4&nbsp;седмица';
 		} else if ($diff < -13) {	// Великий пост 5-я седмица
-			return 'sluzhby-pjatoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 5 седмица';
+			return 'sluzhby-pjatoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 5&nbsp;седмица';
 		} else if ($diff < -6) {		// Великий пост 6-я седмица
-			return 'sluzhby-shestoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 6 седмица';
+			return 'sluzhby-shestoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 6&nbsp;седмица';
 		} else if ($diff < 0) {		// Великий пост страстная седмица
 			return 'sluzhby-strastnoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. Страстная седмица';
 
@@ -633,19 +635,19 @@ class bgCalendarWidget extends WP_Widget {
 		} else if ($diff < 7) {		// Светлая седмица
 			return 'sluzhby-svetloj-sedmitsy/'.$w.'">Цветная триодь. Светлая седмица';
 		} else if ($diff < 14) {		// 2-я седмица по Пасхе
-			return '/sluzhby-vtoroj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 2 седмица';
+			return '/sluzhby-vtoroj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 2&nbsp;седмица';
 		} else if ($diff < 21) {		// 3-я седмица по Пасхе
-			return 'sluzhby-tretej-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 3 седмица';
+			return 'sluzhby-tretej-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 3&nbsp;седмица';
 		} else if ($diff < 28) {		// 4-я седмица по Пасхе
-			return 'sluzhby-chetvertoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 4 седмица';
+			return 'sluzhby-chetvertoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 4&nbsp;седмица';
 		} else if ($diff < 35) {		// 5-я седмица по Пасхе
-			return 'sluzhby-pjatoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 5 седмица';
+			return 'sluzhby-pjatoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 5&nbsp;седмица';
 		} else if ($diff < 42) {		// 6-я седмица по Пасхе
-			return 'sluzhby-shestoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 6 седмица';
+			return 'sluzhby-shestoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 6&nbsp;седмица';
 		} else if ($diff < 49) {		// 7-я седмица по Пасхе
-			return 'sluzhby-sedmoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 7 седмица';
+			return 'sluzhby-sedmoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 7&nbsp;седмица';
 		} else if ($diff < 56) {		// 8-я седмица по Пасхе
-			return 'sluzhby-vosmoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 8 седмица';
+			return 'sluzhby-vosmoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 8&nbsp;седмица';
 		} else if ($diff ==  56) {	// День всех Святых
 			return 'sluzhby-vosmoj-sedmitsy-po-pashe/8">Цветная триодь. День всех Святых';
 
