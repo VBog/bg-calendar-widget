@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 2.3.1
+    Version: 3.0
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,16 +37,25 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '2.3.1');
+define('BG_CALENDAR_WIDGET_VERSION', '3.0');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
 define('BG_CALENDAR_WIDGET_LOG', dirname(__FILE__ ).'/bg_calendar_widget.log');
+
 // Таблица стилей для плагина
 function bg_calendar_widget_enqueue_frontend_styles () {
 	wp_enqueue_style( "bg_calendar_widget_styles", plugins_url( '/css/styles.css', plugin_basename(__FILE__) ), array() , BG_CALENDAR_WIDGET_VERSION  );
 }
 add_action( 'wp_enqueue_scripts' , 'bg_calendar_widget_enqueue_frontend_styles' );
+
+// JS скрипт 
+function bg_calendar_widget_enqueue_frontend_scripts () {
+	wp_enqueue_script( 'bg_calendar_widget_proc', plugins_url( 'js/bg-calendar.js', __FILE__ ), false, BG_CALENDAR_WIDGET_VERSION, true );
+}	 
+if ( !is_admin() ) {
+	add_action( 'wp_enqueue_scripts' , 'bg_calendar_widget_enqueue_frontend_scripts' ); 
+}
 
 /*****************************************************************************************
 	
@@ -60,7 +69,7 @@ class bgCalendarWidget extends WP_Widget {
 		parent::__construct(
 			'bg_calendar_widget', 
 			'Православный календарь', // заголовок виджета
-			array( 'description' => 'Выводит в сайдбар Православный кендарь с сайта "Азбука веры".' ) // описание
+			array( 'description' => 'Выводит в сайдбар Православный календарь с сайта "Азбука веры".' ) // описание
 		);
 	}
  
@@ -70,15 +79,15 @@ class bgCalendarWidget extends WP_Widget {
  
 		echo $args['before_widget'];
  
-		if ( ! empty( $title ) )
-			echo $args['before_title'] . $title . $args['after_title'];
- 
 		$calendar = $this->getAzbykaCalendar ( $instance );
 		if ($calendar) {
 ?>
 	<div class="widget-item">
-		<div class="widget-inner">
-			<?php echo $calendar; ?>
+		<div class="widget-inner bg-calendar-widget">
+		<?php 
+			if ( !empty( $title ) ) echo $args['before_title'] . $title . $args['after_title'];
+			echo $calendar; 
+		?>
 		</div>
 	</div>
 <?php
@@ -97,7 +106,11 @@ class bgCalendarWidget extends WP_Widget {
 			<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
 			<label><input type="checkbox" id="<?php echo $this->get_field_id( 'icon' ); ?>" name="<?php echo $this->get_field_name( 'icon' ); ?>"<?php echo ( isset($instance['icon']) && $instance['icon'] ) ? ' checked' : '' ?>> Икона </label>
 			<span>&nbsp;</span>
+			<label><input type="checkbox" id="<?php echo $this->get_field_id( 'descriptions' ); ?>" name="<?php echo $this->get_field_name( 'descriptions' ); ?>"<?php echo ( isset($instance['descriptions']) && $instance['descriptions'] ) ? ' checked' : '' ?>> Жития </label>
+			<span>&nbsp;</span>
 			<label><input type="checkbox" id="<?php echo $this->get_field_id( 'readings' ); ?>" name="<?php echo $this->get_field_name( 'readings' ); ?>"<?php echo ( isset($instance['readings']) && $instance['readings'] ) ? ' checked' : '' ?>> Чтения </label>
+			<span>&nbsp;</span>
+			<label><input type="checkbox" id="<?php echo $this->get_field_id( 'tropary' ); ?>" name="<?php echo $this->get_field_name( 'tropary' ); ?>"<?php echo ( isset($instance['tropary']) && $instance['tropary'] ) ? ' checked' : '' ?>> Тропари </label>
 			<span>&nbsp;</span>
 			<label><input type="checkbox" id="<?php echo $this->get_field_id( 'links' ); ?>" name="<?php echo $this->get_field_name( 'links' ); ?>"<?php echo ( isset($instance['links']) && $instance['links'] ) ? ' checked' : '' ?>> Ссылки </label>
 		</p>
@@ -109,10 +122,10 @@ class bgCalendarWidget extends WP_Widget {
 		$instance = array();
 		$instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
 		$instance['icon'] = isset($new_instance['icon']) ? filter_var( $new_instance['icon'], FILTER_VALIDATE_BOOLEAN ) : false;
+		$instance['descriptions'] = isset($new_instance['descriptions']) ? filter_var( $new_instance['descriptions'], FILTER_VALIDATE_BOOLEAN ) : false;
 		$instance['readings'] = isset($new_instance['readings']) ? filter_var( $new_instance['readings'], FILTER_VALIDATE_BOOLEAN ) : false;
+		$instance['tropary'] = isset($new_instance['tropary']) ? filter_var( $new_instance['tropary'], FILTER_VALIDATE_BOOLEAN ) : false;
 		$instance['links'] = isset($new_instance['links']) ? filter_var( $new_instance['links'], FILTER_VALIDATE_BOOLEAN ) : false;
-		
-		delete_transient('getCalendar_key_'.date('Y-m-d'));
 		
 		return $instance;
 	}
@@ -122,12 +135,7 @@ class bgCalendarWidget extends WP_Widget {
 
 		$weekday = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','<span>Воскресенье</span>'];
 		$monthes = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-
-		$events = array();
-		$main_event = array();
-		$prefeast_event = array();
-		$special_event = array();
-	
+		
 		if (function_exists('bg_currentDate')) $date = bg_currentDate();
 		else {
 			if (isset($_GET["date"])) {		// Задана дата
@@ -139,256 +147,445 @@ class bgCalendarWidget extends WP_Widget {
 		
 		$date = apply_filters('bg_calendar_widget_date', $date);
 		
-		list($y,$m,$d) = explode ('-', $date);
-		$wd = date("N",strtotime($date)); 
+		list($y, $m, $d) = explode('-', $date);
+		$y = (int)$y; 
+		$wd = date("N",strtotime($date));
+		$tone = bg_getTone($date);
+		$easter = bg_get_easter($y);
+
 		$dd = ($y-$y%100)/100 - ($y-$y%400)/400 - 2;
 		$old = date("Y-m-d",strtotime ($date.' - '.$dd.' days')) ;
 		list($old_y,$old_m,$old_d) = explode ('-', $old);
+
+		$json = $this->bg_get_calendar_data($date);
+		$data = json_decode($json, true);
+
+		$tomorrow = date ('Y-m-d', strtotime($date.'+ 1 days'));
+		$json_tomorrow = $this->bg_get_calendar_data($tomorrow);
+		$data_tomorrow = json_decode($json_tomorrow, true);
+
+		ob_start();
+		?>
+		<div class="calendar">
+		<?php if (isset($instance['icon']) && $instance['icon'] ) : ?>
+		<!-- Икона дня -->
+			<div id="icon-pics">
+				<div class="icon"><img height="230" src="https://azbyka.ru/worships/calendar/images/<?php echo $data['icon']; ?>" title="<?php echo $data['icon_title']; ?>" alt="<?php echo $data['icon_title']; ?>" /></div>
+			</div>
+		<?php endif; ?>
+		<!-- Дата по новому стилю -->
+			<h3<?php echo (($wd==7)?' style=" color:red"':""); ?>><?php echo $weekday[$wd-1].', '. sprintf (_('%1$d %2$s %3$d г.'), (int)$d , $monthes[$m-1] , (int)$y); ?><br>
+		<!-- и по старому стилю -->
+			<?php echo '('.sprintf (_('%1$d %2$s ст.ст.'), (int)$old_d, $monthes[$old_m-1]).')'; ?></h3>
+		<!-- Название седмицы/Недели -->
+			<h4<?php echo (($wd==7)?' style=" color:red"':""); ?>><?php echo $data['sedmica']; ?></h4>
+		<!-- Глас, пост, пища -->
+			<p><?php echo _("Глас").' '.$data['tone']; ?>, <?php echo $data['food']; ?></p>
 		
-			
-		$sufix = [
-			'holidays' => 'prazdnik-',
-			'saints' => 'sv-',
-			'ikons' => 'ikona-'
-		];
-
-		$the_key='getCalendar_key_'.$date;
-		if(false===($quote=get_transient($the_key)) || BG_CALENDAR_WIDGET_DEBUG) {
-			
-			$main_feast = array();
-			$feasts = array();
-			$feast_type = ['Великий', 'Бденный',  'Полиелейный', 'Славословный', 'Шестеричный', 'Вседневный'];
-			
-			$quote = '<div class="saints">';
-			$response = wp_remote_get( 'https://azbyka.ru/days/api/day/'.$date.'/tropary.json' );
-			$json = wp_remote_retrieve_body($response);
-			if ($json) {
-				$data = json_decode($json, false);
-
-			// Соберем все события в единый массив
-				// Праздники
-				foreach($data->holidays as $holiday) {
-					$event = (object)array();
-					if (!empty($holiday->full_title)) $event->title = strip_tags($holiday->full_title);
-					elseif (!empty($holiday->title)) $event->title = strip_tags($holiday->title);
-					else continue;
-					if ($holiday->ideograph) $event->ideograph = $holiday->ideograph;
-					else $event->ideograph = 6;
-					$event->priority = 0;
-
-					$event->id = 'h'. $holiday->id;
-					$event->type = 'holidays';
-					$event->feast_type = $holiday->in_honor;
-					$event->group = 0;
-					$event->url = 'https://azbyka.ru/days/prazdnik-'. $holiday->uri;
-					$event->imgs = $holiday->imgs;		
-					$event->line = '<span class="feast'.$event->ideograph.'"><a title="'. $event->title .'" href="'. $event->url .'" target="_blank" rel="noopener">'.$event->title.'</a></span>';
-
-					
-					
-					switch ($holiday->subtype) {
-						case 'sunday':
-							$event->type = 'special';
-							$event->ideograph = 8;				
-							$special_event = $event;
-						break;
-
-						case 'saturday_before':
-						case 'sunday_before':
-						case 'saturday_after':
-						case 'sunday_after':
-							$event->ideograph = 8;				
-							$event->type = 'weekend';
-							$special_event = $event;
-						break;
-
-						case 'before':
-							$event->type = 'prefeast';
-							$event->ideograph = 8;				
-							$prefeast_event = $event;
-						break;
-						case 'after':
-							$event->type = 'afterfeast';
-							$event->ideograph = 8;				
-							$prefeast_event = $event;
-						break;
-						case 'leave_taking':
-							$event->type = 'feastend';
-							$event->ideograph = 4;				
-							$prefeast_event = $event;
-						break;
-
-						default:
-							if (str_starts_with($event->title, 'Навече́рие')) {
-								$event->type = 'eve';
-								$event->ideograph = 8;				
-								$prefeast_event = $event;
-							}
-							else $events[] = $event;
-					}
-				}
-
-				// Святые
-				foreach($data->saints as $saint) {
-
-					$event = (object)array();
-					// Название
-					if (!empty($saint->title_genitive)) $title = trim(strip_tags($saint->title_genitive));
-					elseif (!empty($saint->title)) $title = trim(strip_tags($saint->title));
-					else continue;
-					
-					if ($saint->suffix) $title .= (($saint->suffix[0] == ',')?'':' ').trim(strip_tags($saint->suffix));
-			
-					if ($saint->prefix) $title = trim(strip_tags(mb_strtolower($saint->prefix))).' '.$title;
-					elseif ($saint->type_of_sanctity) $title = trim(strip_tags($saint->type_of_sanctity)).' '.$title;
-					
-					// Имя
-					$name = strip_tags($saint->name);
-					
-					// Лик святости
-					if ($saint->group > 0) $sanctity = $saint->type_of_sanctity_plural;
-					else $sanctity = $saint->type_of_sanctity;
-					
-					// Собираем святых в группы 
-					$key = array_search($saint->group, array_column($events, 'group'));
-					if ($saint->group && $key !== false) {
-						$url = 'https://azbyka.ru/days/sv-'. $saint->uri;
-						$line = '<span class="feast'.$saint->ideograph.'"><a title="'. $saint->title .'" href="'. $url .'" target="_blank" rel="noopener">'.$title.'</a></span>';
-						$union = (!empty($events[$key]->union))?trim($events[$key]->union):',';
-						if ($union[0] != ',') $union = ' '. $union;
-						$events[$key]->title .= $union.' '.$title;
-						$events[$key]->name .= $union.' '.$name;
-						$events[$key]->line .= $union.' '.$line;
-						// Список всех ID группы
-						$event->id .= ',s'. $saint->id;
-						// Если в группе разные лики святости, то принимаем общее название по первому святому в группе
-						if ($events[$key]->sanctity != $sanctity) $events[$key]->sanctity = $types_of_sanctity[$events[$key]->sanctity];
-						continue;
-					}
-					
-					// Данные о группе от первого святого в списке
-					$event->title = $title;
-					$event->name = $name;
-					$event->sanctity = $sanctity;
-					$event->group = $saint->group;
-					$event->split_group = $saint->split_group;
-					$event->union = $saint->union;
-					$event->gender = $saint->sex;
-					
-					if ($saint->ideograph) {
-						if ($saint->ideograph == 6 && $saint->priority > 1) $event->ideograph = 7;
-						if ($saint->ideograph == 7 && $saint->priority == 1) $event->ideograph = 6;
-						else $event->ideograph = $saint->ideograph;
-					} else $event->ideograph = 7;
-					$event->priority = $saint->priority;
-					
-					$event->id = 's'. $saint->id;
-					$event->type = 'saints';
-					$event->feast_type = 'saint';
-					$event->url = 'https://azbyka.ru/days/sv-'. $saint->uri;
-					$event->imgs = $saint->imgs;		
-					$event->line = '<span class="feast'.$event->ideograph.'"><a title="'. $saint->title .'" href="'. $saint->url .'" target="_blank" rel="noopener">'.$event->title.'</a></span>';
-					
-					$events[] = $event;
-				}
-
-				// Иконы
-				foreach($data->ikons as $ikon) {
-					$event = (object)array();
-					if (!empty($ikon->clean_title)) $event->title = strip_tags($ikon->clean_title);
-					elseif (!empty($ikon->title)) $event->title = strip_tags($ikon->title);
-					else continue;
-					if (!empty($ikon->ideograph)) {
-						if ($ikon->ideograph == 6) $ikon->ideograph = 7;
-						else $event->ideograph = $ikon->ideograph;
-					} else {
-						$event->ideograph = 7;
-						$event->title = 'иконы Богородицы '.$event->title;
-					}
-					$event->priority = 8;
-					
-					$event->id = 'i'. $ikon->id;
-					$event->type = 'ikons';
-					$event->feast_type = 'our_lady';
-					$event->group = 0;
-					$event->url = 'https://azbyka.ru/days/ikona-'. $ikon->uri;
-					$event->imgs = $ikon->imgs;		
-					$event->line = '<span class="feast'.$event->ideograph.'"><a title="'. $event->title .'" href="'. $event->url .'" target="_blank" rel="noopener">'.$event->title.'</a></span>';
-
-					$events[] = $event;
+		<?php
+		$level_name = [_('Двунадесятый'), _('Великий'), _('Бденный'), _('Полиелейный'), _('Славословный'), _('Шестеричный'), _('Вседневный'), _('Особый')];
+		/*******************************************************
+			Выводим названия событий пятью абзацами.
+				1. Есть служба в Минее/Триоди
+				2. Память общих святых
+				3. Память новомучеников
+				4. Почитание икон Богородицы
+				5. Прочие
+		********************************************************/
+		// Внимание, данные с приоритетом 0 на экран не выводим (только чтения)
+		for ($i=1; $i<6; $i++) {
+			$text = '';
+			foreach ($data['events'] as $event) {
+				$title = (in_array($event['level'], [1,8]))?('<b>'.$event['title'].'</b>'):$event['title'];
+				$title = '<span'.(($event['level'] < 3)?' style=" color:red"':"").'>'.$title.'</span>';
+				if ($event['priority'] == $i) {
+					$symbol = ($event['level'] < 7)?('<img src="'.plugins_url( 'img/S'.$event['level'].'.gif', __FILE__ ).'" title="'.$level_name[$event['level']].'" alt="'.$level_name[$event['level']].'" /> '):'';
+					if (isset($instance['descriptions']) && $instance['descriptions'] && !empty($event['description'])) { 
+						$desc_img = ' <a href="#bg_desc_text"><span class="bg_descriptions" data-desc="'.$event['id_list'].'"><img src="'.plugins_url( 'img/L.gif', __FILE__ ).'" title="Житие" alt="Житие" /></span></a>';
+					} else $desc_img = '';
+					$text .= $symbol. $title.$desc_img.'. ';
 				}
 			}
-			// Сортируем события
-			usort($events, function($a, $b) {
-				return strcmp($a->priority, $b->priority);
-			});
-			
-		// Икона дня
-			if (isset($instance['icon']) && $instance['icon'] ) {
-				$allevents = $events;
-				array_unshift($allevents, $special_event, $prefeast_event);
-				foreach ($allevents as $event) {
-					if (!empty($event->imgs)) {
-						$image = '<div class="days-image">';
-							$image .= '<a title="'. $event->title .'" href="'. $event->url .'" target="_blank" rel="noopener">';
-							$image.= '<img src="'.$event->imgs[0]->preview_absolute_url.'" alt="'.$event->title.'">';
-							$image .= '</a>';
-						$image .= '</div>';
-						break;
-					}	
-				}
-			}
-		// Дата
-			$image .= '<span class="week_day"><a href="https://azbyka.ru/days/'. $date .'"'.(($wd==7)?' style="color:red"':"").'>'. $weekday[$wd-1] .',<br>'. (int) $d .' '. $monthes[$m-1] .' '. $y .'г.</a></span><br>';
-			$image .= '('.(int) $old_d .' '. $monthes[$old_m-1] .' ст.ст.)<br>';
-			if (!empty($special_event))	$image .= '<span class="round_week"><a title="'. $special_event->title .'" href="'. $special_event->url .'" target="_blank" rel="noopener">'.$special_event->title.'</a></span>';	
-			else $image .= '<span class="round_week">'.strip_tags($data->fasting->round_week).'</span>';
-			if (!empty($prefeast_event)) $image .= '<p class="prefeast"><a title="'. $prefeast_event->title .'" href="'. $prefeast_event->url .'" target="_blank" rel="noopener">'.strip_tags($prefeast_event->title).'</a></p>';
-			
-		// Список праздников и святых
-			$priority = 0;
-			$paragraph = '';
-			$quote = '';
-			foreach ($events as $event) {
-				if ($event->priority != $priority && $paragraph) {
-					$quote .= '<p>'.substr($paragraph, 0, -2).'.</p>'; 
-					$paragraph = '';
-				}
-				$priority = $event->priority; 
-				// Знак Типикона
-				if ($event->ideograph < 7) $symbol ='<img src="'.plugins_url( 'img/S'.$event->ideograph.'.gif', __FILE__ ).'" title="'.$feast_type[$event->ideograph-1].' праздник" />&nbsp;';
-				else $symbol ='';
-				// Текст абзаца
-				$paragraph .= $symbol.$event->line.'; ';
-			}
-			if ($paragraph) $quote .= '<p>'.substr($paragraph, 0, -2).'.</p>'; 
-
-		//Чтения дня
-			if(isset($instance['readings']) && $instance['readings'] && !empty($data->texts) && !empty($preparedText = strip_tags($data->texts[0]->text,'<p><b><strong><i><em><a><br>'))){
-				$quote .= '<hr>'.$preparedText.'<label class="btn-info"><input type="checkbox" class="btn-info-checkbox"><span class="btn-info-inner"><b>Чтения Св. Писания на богослужениях</b><br>Зач. - № <a href="https://azbyka.ru/zachala" target="_blank">зачала</a><br>Утр. - на <a href="https://azbyka.ru/utrenya" target="_blank">Утрени</a>.<br>Лит. - на <a href="https://azbyka.ru/liturgiya" target="_blank">Литургии</a>.</span><i class="fa fa-question-circle"></i></label>';
-			}
-			
-		// Ссылки на богослужебные книги
-			if (isset($instance['links']) && $instance['links'] ) {
-				$mantle = array("janvar","fevral","mart","aprel","maj","iyun","iyul","avgust","sentjabr","oktjabr","nojabr","dekabr");
-				$tip48 = array(5,6,7,8,9,10,11,12,1,2,3,4);
-				$quote .= '<hr><a class="hlink" href="https://azbyka.ru/bogosluzhebnye-ukazaniya?date='.$y.'-'.$m.'-'.$d.'" target="_blank">Богослужебные указания ►</a>';
-				$quote .= ' <a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/tipikon/48_'.$tip48[$m-1].'" target="_blank">Типикон ►</a>';
-				$quote .= ' <a class="calVoice hlink" target="_blank" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/'.$this->worships($date).' Глас '.$this->getVoice($date).' ►</a>';
-				// Минея
-				if (!empty($mantle[$old_m-1])) 
-					$quote .= ' <a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/mineja-'.$mantle[$old_m-1].'/'.$old_d.'" target="_blank">Минея, '.$old_d.' '.$monthes[$old_m-1].' ►</a>';
-			}
-			
-			$quote = '<div class="widget-title saints-title"><a href="/days/" title="Православный календарь" target="_blank" rel="noopener">Православный календарь</a></div>'.
-					 '<div class="date-today">'.$image.'</div>'.
-					 '<div class="saints">'.$quote.'</div>';
-
-			set_transient( $the_key, $quote, 60*MINUTE_IN_SECONDS );
+			if ($text) echo '<p>'.$text.'</p>';
 		}
+		?>
+		</div>
+		<?php if (isset($instance['descriptions']) && $instance['descriptions'] ) : ?>
+	<!-- Текст Жития -->
+		<div id="bg_desc_text" class="bg_content"></div>
+		<?php 
+		endif;
+	/*******************************************************
+		Выводим чтения суточного круга
+	********************************************************/
+		if (isset($instance['readings']) && $instance['readings'] ) : 
+		?>
+		<hr>
+		<div class='readings'>
+		<?php
+	// Тип литургии 
+		$liturgy = [_("Нет литургии.") ,_("Литургия свт. Иоанна Златоуста."), _("Литургия свт. Василия Великого."), _("Литургия Преждеосвященных Даров.")];
+		echo '<h5>'.$liturgy[$data['liturgy']].'</h5>';
+
+	// Список чтений дня
+		// Праздники
+		foreach ($data['events'] as $event) {
+			if (!in_array($data['day_subtype'], ['universal_saturday', 'eve'])) {
+				if ($wd == 6 || (is_numeric($event['priority']) && $event['level'] < 3 && $wd < 7)) { // Суббота или Бдение и выше
+					$this->bg_printReadings ($event['readings'], false);
+				}
+			}
+		}
+		// Рядовые
+		foreach ($data['ordinary_readings'] as $readings) {
+			$this->bg_printReadings ($readings);
+		}
+		// Праздники
+		foreach ($data['events'] as $event) {
+			if (!in_array($data['day_subtype'], ['universal_saturday', 'eve'])) {
+				if ($wd != 6 && is_numeric($event['priority']) && !($event['level'] < 3 && $wd < 7)) { // Не суббота и Полиелей и ниже
+					$this->bg_printReadings ($event['readings'], false);
+				}
+			} else {
+				if (in_array($event['subtype'], ['universal_saturday', 'eve'])) {
+					$this->bg_printReadings ($event['readings'], false);
+				}
+			}
+			
+		}
+		foreach ($data_tomorrow['events'] as $event) {
+			$this->bg_printEvReadings ($event['readings']);
+		}
+		?>
+		</div>
+		<!-- Текст Библии -->
+		<div id="bg_bible_text" class="bg_content"></div>
+
+
+		<?php 
+		endif;
+	/*******************************************************
+		Выводим тропари, кондаки, молитвы и величания
+	********************************************************/
+		if (isset($instance['tropary']) && $instance['tropary'] ) : 
+		?>
+		<div class='tropary'>
+		<hr>
+		<h3><?php echo _("Тропари, кондаки, молитвы и величания"); ?></h3>
+		<?php 
+		// Тропари и кондаки дня
+		$event = $data['tropary_day'];
+		if (!empty($event['taks']) && !empty($event['taks'][0])) {
+			echo '<details><summary>'._("Тропари и кондаки дня").'</summary>'.PHP_EOL;
+			echo '<div class="bg_content"><hr>'.PHP_EOL;
+			foreach ($event['taks'] as $tak) {
+				echo '<h4>'.$tak['title'].($tak['voice']?(', '._("глас").' '.$tak['voice']):'').'</h4>'.PHP_EOL;
+				echo '<p>'.$tak['text'].'</p>'.PHP_EOL;
+			}
+			echo '<hr></div></details>'.PHP_EOL;
+		}
+	 
+		// Тропари и кондаки событий календаря
+		foreach ($data['events'] as $event) {
+			if (!empty($event['taks']) && !empty($event['taks'][0])) {
+				$title = $event['taks'][0]['title'];	// В заголовок выносим название первой записи без первого слова (Тропарь)
+				$title = count(explode(' ',$title,2))>1?explode(' ',$title,2)[1]:'';
+				echo '<details><summary>'.$title.'</summary>'.PHP_EOL;
+				echo '<div class="bg_content"><hr>'.PHP_EOL;
+				foreach ($event['taks'] as $tak) {
+					echo '<h4>'.$tak['title'].($tak['voice']?(', '._("глас").' '.$tak['voice']):'').'</h4>'.PHP_EOL;
+					echo '<p>'.$tak['text'].'</p>'.PHP_EOL;
+				}
+			echo '<hr></div></details>'.PHP_EOL;
+			}
+		}
+		?>		
+		</div>
+		<?php
+		endif;
+	/*******************************************************
+		Выводим ссылки на богослужебные книги
+	********************************************************/
+		if (isset($instance['links']) && $instance['links'] ) :
+		$mantle = array("janvar","fevral","mart","aprel","maj","iyun","iyul","avgust","sentjabr","oktjabr","nojabr","dekabr");
+		$tip48 = array(5,6,7,8,9,10,11,12,1,2,3,4);
+		$month = array("ианнуарий", "февруарий", "март", "априлий", "маий", "иуний", "иулий", "август", "септемврий", "октоврий", "ноемврий", "декемврий");
+		?>
+		<div class='links'>
+			<hr>
+			<a class="hlink" href="https://azbyka.ru/bogosluzhebnye-ukazaniya?date=<?php echo $date; ?>" target="_blank">Богослужебные указания ►</a>
+			<a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/tipikon/48_<?php echo $tip48[$old_m-1]; ?>" target="_blank">Типикон, <?php echo $month[$old_m-1]; ?>  ►</a>
+			<a class="calVoice hlink" target="_blank" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/<?php echo $this->worships($date); ?> ►</a>
+			
+			<?php if (!empty($mantle[$old_m-1])) { ?>
+				<a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/mineja-<?php echo $mantle[$old_m-1].'/'.$old_d; ?>" target="_blank">Минея, <?php echo $old_d.' '.$monthes[$old_m-1]; ?> (ст.ст.) ►</a>
+			<?php } ?>
+		</div>
+		<?php	
+		endif;
+
+		$quote = ob_get_contents();
+		ob_end_clean();
+
 		return $quote;
 	}
 	
+	/*******************************************************************************************
+
+		Функция получает данные с сайта Календаря 
+		
+	********************************************************************************************/
+	private function bg_get_calendar_data ($date='') {
+		$json = '';
+		$the_key = 'calendar_data_'.$date;
+		if(false===($json=get_transient($the_key)) || WORSHIPS_DRBUG_DATA) {
+			$response = wp_remote_get( 'https://azbyka.ru/worships/calendar/api/'.$date, ['timeout' => 120,]);
+			// Проверим на ошибки
+			if ( is_wp_error( $response ) ) {
+				error_log($date.' '.$response->get_error_message().PHP_EOL, 3, WORSHIPS_LOG);
+				return '';
+			}
+			$json = wp_remote_retrieve_body($response);
+			set_transient( $the_key, $json, 24*HOUR_IN_SECONDS );
+		}
+		return $json;
+	}
+
+	/*************************************************************************************
+
+		Функция выводит ссылки на чтения Св.Писания
+			
+	**************************************************************************************/
+	// Всего дня 
+	private function bg_printReadings ($readings, $evening=true) {
+		if (empty($readings)) return;
+		$text =
+			(!empty($readings['morning'])?('<i>'._("Утр.").':</i> '.$this->blink ($readings['morning']).' '):'').
+			(!empty($readings['hour1'])?('<i>'._("1-й час").':</i> '.$this->blink ($readings['hour1']).' '):'').
+			(!empty($readings['hour3'])?('<i>'._("3-й час").':</i> '.$this->blink ($readings['hour3']).' '):'').
+			(!empty($readings['hour6'])?('<i>'._("6-й час").':</i> '.$this->blink ($readings['hour6']).' '):'').
+			(!empty($readings['hour9'])?('<i>'._("9-й час").':</i> '.$this->blink ($readings['hour9']).' '):'').
+			(!empty($readings['apostle'])?('<i>'._("Лит.").': '._("Ап.").'-</i> '.$this->blink ($readings['apostle']).' '):'').
+			(!empty($readings['gospel'])?('<i>'._("Ев.").'-</i> '.$this->blink ($readings['gospel']).' '):'').
+			($evening && !empty($readings['evening'])?('<i>'._("Веч.").':</i> '.$this->blink ($readings['evening']).' '):'');
+		echo $text?('<p>'.(!empty($readings['title'])?('<i>'.$readings['title'].':</i> '):'').$text.'</p>'):'';
+	}
+	// Вечера
+	private function bg_printEvReadings ($readings) {
+		if (empty($readings)) return;
+		$text = (!empty($readings['evening'])?('<i>'._("Веч.").':</i> '.$this->blink ($readings['evening']).' '):'');
+		echo $text?('<p>'.(!empty($readings['title'])?('<i>'.$readings['title'].':</i> '):'').$text.'</p>'):'';
+	}
+
+	/*************************************************************************************
+		Функция переводит абревиатуру книг на язык локали и формирует гиперссылки на сайт Библии
+
+		Параметры:
+			$reference - ссылка на Библию на русском языке
+			
+		Возвращает ссылку на отрывок Св.Писания
+			
+	**************************************************************************************/
+	// 
+	private function blink ($reference) {
+		$bg_bibrefs_abbr = array(		// Стандартные обозначение книг Священного Писания
+			// Ветхий Завет
+			// Пятикнижие Моисея															
+			'Gen'		=>"Быт", 
+			'Ex'		=>"Исх", 
+			'Lev'		=>"Лев",
+			'Num'		=>"Чис",
+			'Deut'		=>"Втор",
+			// «Пророки» (Невиим) 
+			'Nav'		=>"Нав",
+			'Judg'		=>"Суд",
+			'Rth'		=>"Руф",
+			'1Sam'		=>"1Цар",
+			'2Sam'		=>"2Цар",
+			'1King'		=>"3Цар",
+			'2King'		=>"4Цар",
+			'1Chron'	=>"1Пар",
+			'2Chron'	=>"2Пар",
+			'Ezr'		=>"1Езд",
+			'Nehem'		=>"Неем",
+			'Est'		=>"Есф",
+			// «Писания» (Ктувим)
+			'Job'		=>"Иов",
+			'Ps'		=>"Пс",
+			'Prov'		=>"Притч", 
+			'Eccl'		=>"Еккл",
+			'Song'		=>"Песн",
+			'Is'		=>"Ис",
+			'Jer'		=>"Иер",
+			'Lam'		=>"Плч",
+			'Ezek'		=>"Иез",
+			'Dan'		=>"Дан",	
+			// Двенадцать малых пророков 
+			'Hos'		=>"Ос",
+			'Joel'		=>"Иоил",
+			'Am'		=>"Ам",
+			'Avd'		=>"Авд",
+			'Jona'		=>"Ион",
+			'Mic'		=>"Мих",
+			'Naum'		=>"Наум",
+			'Habak'		=>"Авв",
+			'Sofon'		=>"Соф",
+			'Hag'		=>"Аг",
+			'Zah'		=>"Зах",
+			'Mal'		=>"Мал",
+			// Второканонические книги
+			'1Mac'		=>"1Мак",
+			'2Mac'		=>"2Мак",
+			'3Mac'		=>"3Мак",
+			'Bar'		=>"Вар",
+			'2Ezr'		=>"2Езд",
+			'3Ezr'		=>"3Езд",
+			'Judf'		=>"Иудиф",
+			'pJer'		=>"ПослИер",
+			'Solom'		=>"Прем",
+			'Sir'		=>"Сир",
+			'Tov'		=>"Тов",
+			// Новый Завет
+			// Евангилие
+			'Mt'		=>"Мф",
+			'Mk'		=>"Мк",
+			'Lk'		=>"Лк",
+			'Jn'		=>"Ин",
+			// Деяния и послания Апостолов
+			'Act'		=>"Деян",
+			'Jac'		=>"Иак",
+			'1Pet'		=>"1Пет",
+			'2Pet'		=>"2Пет",
+			'1Jn'		=>"1Ин", 
+			'2Jn'		=>"2Ин",
+			'3Jn'		=>"3Ин",
+			'Juda'		=>"Иуд",
+			// Послания апостола Павла
+			'Rom'		=>"Рим",
+			'1Cor'		=>"1Кор",
+			'2Cor'		=>"2Кор",
+			'Gal'		=>"Гал",
+			'Eph'		=>"Еф",
+			'Phil'		=>"Флп",
+			'Col'		=>"Кол",
+			'1Thes'		=>"1Сол",
+			'2Thes'		=>"2Сол",
+			'1Tim'		=>"1Тим",
+			'2Tim'		=>"2Тим",
+			'Tit'		=>"Тит",
+			'Phlm'		=>"Флм",
+			'Hebr'		=>"Евр",
+			'Apok'		=>"Отк");
+
+
+		$bg_bibrefs_translate = array(		// Перевод обозначений книг Священного Писания
+			// Ветхий Завет
+			// Пятикнижие Моисея															
+			'Gen'		=>_("Быт"), 
+			'Ex'		=>_("Исх"), 
+			'Lev'		=>_("Лев"),
+			'Num'		=>_("Чис"),
+			'Deut'		=>_("Втор"),
+			// «Пророки» (Невиим) 
+			'Nav'		=>_("Нав"),
+			'Judg'		=>_("Суд"),
+			'Rth'		=>_("Руф"),
+			'1Sam'		=>_("1Цар"),
+			'2Sam'		=>_("2Цар"),
+			'1King'		=>_("3Цар"),
+			'2King'		=>_("4Цар"),
+			'1Chron'	=>_("1Пар"),
+			'2Chron'	=>_("2Пар"),
+			'Ezr'		=>_("1Езд"),
+			'Nehem'		=>_("Неем"),
+			'Est'		=>_("Есф"),
+			// «Писания» (Ктувим)
+			'Job'		=>_("Иов"),
+			'Ps'		=>_("Пс"),
+			'Prov'		=>_("Притч"), 
+			'Eccl'		=>_("Еккл"),
+			'Song'		=>_("Песн"),
+			'Is'		=>_("Ис"),
+			'Jer'		=>_("Иер"),
+			'Lam'		=>_("Плч"),
+			'Ezek'		=>_("Иез"),
+			'Dan'		=>_("Дан"),	
+			// Двенадцать малых пророков 
+			'Hos'		=>_("Ос"),
+			'Joel'		=>_("Иоил"),
+			'Am'		=>_("Ам"),
+			'Avd'		=>_("Авд"),
+			'Jona'		=>_("Ион"),
+			'Mic'		=>_("Мих"),
+			'Naum'		=>_("Наум"),
+			'Habak'		=>_("Авв"),
+			'Sofon'		=>_("Соф"),
+			'Hag'		=>_("Аг"),
+			'Zah'		=>_("Зах"),
+			'Mal'		=>_("Мал"),
+			// Второканонические книги
+			'1Mac'		=>_("1Мак"),
+			'1Mac'		=>_("2Мак"),
+			'3Mac'		=>_("3Мак"),
+			'Bar'		=>_("Вар"),
+			'2Ezr'		=>_("2Езд"),
+			'3Ezr'		=>_("3Езд"),
+			'Judf'		=>_("Иудиф"),
+			'pJer'		=>_("ПослИер"),
+			'Solom'		=>_("Прем"),
+			'Sir'		=>_("Сир"),
+			'Tov'		=>_("Тов"),
+			// Новый Завет
+			// Евангилие
+			'Mt'		=>_("Мф"),
+			'Mk'		=>_("Мк"),
+			'Lk'		=>_("Лк"),
+			'Jn'		=>_("Ин"),
+			// Деяния и послания Апостолов
+			'Act'		=>_("Деян"),
+			'Jac'		=>_("Иак"),
+			'1Pet'		=>_("1Пет"),
+			'2Pet'		=>_("2Пет"),
+			'1Jn'		=>_("1Ин"), 
+			'2Jn'		=>_("2Ин"),
+			'3Jn'		=>_("3Ин"),
+			'Juda'		=>_("Иуд"),
+			// Послания апостола Павла
+			'Rom'		=>_("Рим"),
+			'1Cor'		=>_("1Кор"),
+			'2Cor'		=>_("2Кор"),
+			'Gal'		=>_("Гал"),
+			'Eph'		=>_("Еф"),
+			'Phil'		=>_("Флп"),
+			'Col'		=>_("Кол"),
+			'1Thes'		=>_("1Сол"),
+			'2Thes'		=>_("2Сол"),
+			'1Tim'		=>_("1Тим"),
+			'2Tim'		=>_("2Тим"),
+			'Tit'		=>_("Тит"),
+			'Phlm'		=>_("Флм"),
+			'Hebr'		=>_("Евр"),
+			'Apok'		=>_("Отк"));
+
+
+		$bg_bibrefs_name = array_flip($bg_bibrefs_abbr);
+		
+		$reference = preg_replace('/((\xA0)|\s)+/u', '', $reference); // Уберем пробелы
+
+		$refs = explode (';', $reference);			// Несколько ссылок разделенных точкой с запятой
+		$hlink = '';
+		foreach($refs as $ref) {
+			list($name, $ch) = explode('.',$ref);	// Разделим ссылку на аббревиатуру и номера глав и стихов
+
+			$abbr = $bg_bibrefs_name[$name];		// Английская аббревиатура книги 
+			$book = $bg_bibrefs_translate[$abbr];	// Перевод названия книги
+			
+			// Формируем ссылки на Писание
+			$hlink .= '<span class="bg_bibleRef" title="'._("Показать текст").'">'.$book.'.'.$ch.'</span>; ';
+		}
+		$hlink = substr($hlink,0,-2);
+		return $hlink;
+	}
 	
 
 	/*******************************************************************************
@@ -404,57 +601,57 @@ class bgCalendarWidget extends WP_Widget {
 		
 	// Постная триодь
 		if ($diff ==  -70) {			// Неделя о мытаре и фарисее
-			return 'sluzhby-predugotovitelnyh-sedmits/#0_1">Постная триодь. ';
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_1">Постная триодь. Неделя о мытаре и фарисее';
 		} else if ($diff ==  -63) {	// Неделя о блудном сыне
-			return 'sluzhby-predugotovitelnyh-sedmits/#0_5">Постная триодь. ';
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_5">Постная триодь. Неделя о блудном сыне';
 		} else if ($diff ==  -57) {	// В субботу мясопустную
-			return 'sluzhby-predugotovitelnyh-sedmits/#0_9">Постная триодь. ';
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_9">Постная триодь. В субботу мясопустную';
 		} else if ($diff ==  -56) {	// Неделя мясопустная
-			return 'sluzhby-predugotovitelnyh-sedmits/#0_13">Постная триодь. ';
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_13">Постная триодь. Неделя мясопустная';
 		} else if ($diff ==  -50) {	// В субботу сырную
-			return 'sluzhby-predugotovitelnyh-sedmits/#0_17">Постная триодь. ';
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_17">Постная триодь. В субботу сырную';
 		} else if ($diff ==  -49) {	// В неделю сыропустную
-			return 'sluzhby-predugotovitelnyh-sedmits/#0_21">Постная триодь. ';
+			return 'sluzhby-predugotovitelnyh-sedmits/#0_21">Постная триодь. В неделю сыропустную';
 		} else if ($diff < -49) {	// Предуготовительные седмицы
-			return 'oktoih/'.($voice+1).'">Октоих. ';
+			return 'oktoih/'.($voice+1).'">Октоих. Глас '.$this->getVoice($date);
 		} else if ($diff < -41) {	// Великий пост 1-я седмица
-			return 'sluzhby-pervoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+			return 'sluzhby-pervoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 1 седмица';
 		} else if ($diff < -34) {	// Великий пост 2-я седмица
-			return 'sluzhby-vtoroj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+			return 'sluzhby-vtoroj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 2 седмица';
 		} else if ($diff < -27) {	// Великий пост 3-я седмица
-			return 'sluzhby-tretej-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+			return 'sluzhby-tretej-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 3 седмица';
 		} else if ($diff < -20) {	// Великий пост 4-я седмица
-			return 'sluzhby-chetvertoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+			return 'sluzhby-chetvertoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 4 седмица';
 		} else if ($diff < -13) {	// Великий пост 5-я седмица
-			return 'sluzhby-pjatoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+			return 'sluzhby-pjatoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 5 седмица';
 		} else if ($diff < -6) {		// Великий пост 6-я седмица
-			return 'sluzhby-shestoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+			return 'sluzhby-shestoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 6 седмица';
 		} else if ($diff < 0) {		// Великий пост страстная седмица
-			return 'sluzhby-strastnoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. ';
+			return 'sluzhby-strastnoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. Страстная седмица';
 
 	// Цветная триодь
 		} else if ($diff < 7) {		// Светлая седмица
-			return 'sluzhby-svetloj-sedmitsy/'.$w.'">Цветная триодь. ';
+			return 'sluzhby-svetloj-sedmitsy/'.$w.'">Цветная триодь. Светлая седмица';
 		} else if ($diff < 14) {		// 2-я седмица по Пасхе
-			return '/sluzhby-vtoroj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+			return '/sluzhby-vtoroj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 2 седмица';
 		} else if ($diff < 21) {		// 3-я седмица по Пасхе
-			return 'sluzhby-tretej-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+			return 'sluzhby-tretej-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 3 седмица';
 		} else if ($diff < 28) {		// 4-я седмица по Пасхе
-			return 'sluzhby-chetvertoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+			return 'sluzhby-chetvertoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 4 седмица';
 		} else if ($diff < 35) {		// 5-я седмица по Пасхе
-			return 'sluzhby-pjatoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+			return 'sluzhby-pjatoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 5 седмица';
 		} else if ($diff < 42) {		// 6-я седмица по Пасхе
-			return 'sluzhby-shestoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+			return 'sluzhby-shestoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 6 седмица';
 		} else if ($diff < 49) {		// 7-я седмица по Пасхе
-			return 'sluzhby-sedmoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+			return 'sluzhby-sedmoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 7 седмица';
 		} else if ($diff < 56) {		// 8-я седмица по Пасхе
-			return 'sluzhby-vosmoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. ';
+			return 'sluzhby-vosmoj-sedmitsy-po-pashe/'.$w.'">Цветная триодь. 8 седмица';
 		} else if ($diff ==  56) {	// День всех Святых
-			return 'sluzhby-vosmoj-sedmitsy-po-pashe/8">Цветная триодь. ';
+			return 'sluzhby-vosmoj-sedmitsy-po-pashe/8">Цветная триодь. День всех Святых';
 
 	// Октоих 
 		} else {
-			return 'oktoih/'.($voice+1).'">Октоих. ';
+			return 'oktoih/'.($voice+1).'">Октоих. Глас '.$this->getVoice($date);
 		}
 	}
 
@@ -473,6 +670,7 @@ class bgCalendarWidget extends WP_Widget {
 		else $voice = floor(($num-7)/7)%8+1;
 		return $voice;
 	}
+
 	/*******************************************************************************
 		Функция возвращает количество дней между Пасхой и указанной датой по новому стилю
 		Параметры:

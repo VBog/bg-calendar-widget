@@ -1,90 +1,95 @@
-.widget .saints-title{
-	font-weight:bold;
+.bg-calendar-widget .calendar {
+		width: 100%; 
+		text-align: center;
+		font-size: 1em;
 }
 
-.days-image img {
+.bg-calendar-widget .calendar img {
 	max-height: 200px;
 }
 
-.week_day,  
-.round_week {
-	font-size: 120%;
-	font-weight: bold;
-}
-.prefeast {
-	font-size: 100%;
-	font-weight: bold;
+.bg-calendar-widget h3 {
+		font-size: 120%;
+		text-align: center;
 }
 
-.feast1 {
-	color: red;
-	font-size: 110%;
-	font-weight: bold;
-}
-.feast2 {
-	font-size: 110%;
-	font-weight: bold;
-}
-.feast3 {
-	font-size: 110%;
-	font-weight: bold;
-}
-.feast4 {
-	font-weight: bold;
-}
-.saints p {
-	margin-top: 0;
-	margin-bottom: 0.2em;
-}
-.saints p:first-letter {
-	text-transform: uppercase;
+.bg-calendar-widget h4 {
+		font-size: 110%;
+		text-align: center;
 }
 
-.widget_bg_calendar_widget{
-	position: relative;
+.bg-calendar-widget h5 {
+		font-size: 100%;
+		text-align: left;
 }
 
-.widget_bg_calendar_widget .btn-info{
-	bottom: 0.25rem;
-    position: absolute;
-    right: 0.5rem;
-}
-.widget_bg_calendar_widget .btn-info .fa{
-	cursor:pointer;
-}
-.widget_bg_calendar_widget .btn-info-inner{
-	display:none;
-	position: absolute;
-	top: 100%;
-	right:0;
-	width: 14rem;
-	border:1px solid #6b4f38;
-	background-color:#6b4f38;
-	border-radius:5px;
-	padding:10px;
-	color: #fff;
-}
-.widget_bg_calendar_widget .btn-info-inner a,
-.widget_bg_calendar_widget .btn-info-inner a:visited{
-	color: #ffff33;
-}
-.widget_bg_calendar_widget .btn-info-inner a:hover,
-.widget_bg_calendar_widget .btn-info-inner a:visited:hover{
-	color: #ffff00;
+.bg-calendar-widget .calendar .icon {
+	margin-bottom: 0.6em;
 }
 
-@media (hover:none){
-	.widget_bg_calendar_widget .btn-info-checkbox:checked+.btn-info-inner{
-		display:inline-block;
-	}
+.bg-calendar-widget .calendar .icon img {
+	filter: drop-shadow(0px 3px 3px #400a);
 }
 
-@media(hover:hover){
-	.widget_bg_calendar_widget .btn-info:hover .btn-info-inner{
-		display:inline-block;
-	}
+.bg-calendar-widget .readings .bg_bibleRef {
+	cursor: pointer;
 }
 
-.widget_bg_calendar_widget .btn-info-checkbox{
-	appearance: none;
+.bg-calendar-widget .readings .bg_bibleRef:hover {
+	text-decoration: underline;
+}
+
+#bg_desc_text hr,
+#bg_bible_text hr {
+	margin: 0;
+	margin-top: 1em;
+}
+
+div.bg_hide_block {
+	width: 100%;
+    text-align: right;
+	margin: 0;
+}
+
+#bg_hide_block1,
+#bg_hide_block2 {
+	border: 0;
+    padding: 0;
+    margin: 0;
+	margin-right: 5px;
+    background-color: transparent;
+    font-size: 2em;
+	text-align: center;
+    height: 1em;
+	width: 1em;
+}
+
+#bg_hide_block1:hover,
+#bg_hide_block2:hover {
+    background-color: darkred;
+	color: white;
+}
+div.bg_bibrefs_service {
+	max-height: 300px;
+	overflow-y: auto;
+	 overflow-x: none;
+}
+
+div.bg_bibrefs_service::-webkit-scrollbar {
+  width: 8px;
+  background-color: #f9f9fd;
+}
+
+div.bg_bibrefs_service::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background-color: #ede4d6;
+}
+
+div.bg_bibrefs_service::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
+  border-radius: 6px;
+  background-color: #f9f9fd;
+}
+.tropary details {
+	margin: 0;
 }
