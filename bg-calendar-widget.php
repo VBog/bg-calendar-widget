@@ -276,13 +276,13 @@ class bgCalendarWidget extends WP_Widget {
 		// Тропари и кондаки дня
 		$event = $data['tropary_day'];
 		if (!empty($event['taks']) && !empty($event['taks'][0])) {
-			echo '<details><summary>'._("Тропари и кондаки дня").'</summary>'.PHP_EOL;
-			echo '<div class="bg_content"><hr>'.PHP_EOL;
+			echo '<details><summary>'._("Тропари и кондаки дня").'</summary><hr>'.PHP_EOL;
+			echo '<div class="bg_content">'.PHP_EOL;
 			foreach ($event['taks'] as $tak) {
 				echo '<h4>'.$tak['title'].($tak['voice']?(', '._("глас").' '.$tak['voice']):'').'</h4>'.PHP_EOL;
 				echo '<p>'.$tak['text'].'</p>'.PHP_EOL;
 			}
-			echo '<hr></div></details>'.PHP_EOL;
+			echo '</div><hr></details>'.PHP_EOL;
 		}
 	 
 		// Тропари и кондаки событий календаря
@@ -290,13 +290,13 @@ class bgCalendarWidget extends WP_Widget {
 			if (!empty($event['taks']) && !empty($event['taks'][0])) {
 				$title = $event['taks'][0]['title'];	// В заголовок выносим название первой записи без первого слова (Тропарь)
 				$title = count(explode(' ',$title,2))>1?explode(' ',$title,2)[1]:'';
-				echo '<details><summary>'.$title.'</summary>'.PHP_EOL;
-				echo '<div class="bg_content"><hr>'.PHP_EOL;
+				echo '<details><summary>'.$title.'</summary><hr>'.PHP_EOL;
+				echo '<div class="bg_content">'.PHP_EOL;
 				foreach ($event['taks'] as $tak) {
 					echo '<h4>'.$tak['title'].($tak['voice']?(', '._("глас").' '.$tak['voice']):'').'</h4>'.PHP_EOL;
 					echo '<p>'.$tak['text'].'</p>'.PHP_EOL;
 				}
-			echo '<hr></div></details>'.PHP_EOL;
+			echo '</div><hr></details>'.PHP_EOL;
 			}
 		}
 		?>		
