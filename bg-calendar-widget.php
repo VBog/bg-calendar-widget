@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 3.0
+    Version: 3.0.2
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '3.0');
+define('BG_CALENDAR_WIDGET_VERSION', '3.0.2');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -212,7 +212,7 @@ class bgCalendarWidget extends WP_Widget {
 		</div>
 		<?php if (isset($instance['descriptions']) && $instance['descriptions'] ) : ?>
 	<!-- Текст Жития -->
-		<div id="bg_desc_text" class="bg_content"></div>
+		<div id="bg_desc_text"></div>
 		<?php 
 		endif;
 	/*******************************************************
@@ -259,7 +259,7 @@ class bgCalendarWidget extends WP_Widget {
 		?>
 		</div>
 		<!-- Текст Библии -->
-		<div id="bg_bible_text" class="bg_content"></div>
+		<div id="bg_bible_text"></div>
 
 
 		<?php 

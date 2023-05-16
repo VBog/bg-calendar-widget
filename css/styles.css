@@ -74,23 +74,23 @@ div.bg_hide_block {
     background-color: darkred;
 	color: white;
 }
-div.bg_bibrefs_service {
+div.bg_content {
 	max-height: 300px;
 	overflow-y: auto;
 	 overflow-x: none;
 }
 
-div.bg_bibrefs_service::-webkit-scrollbar {
+div.bg_content::-webkit-scrollbar {
   width: 8px;
   background-color: #f9f9fd;
 }
 
-div.bg_bibrefs_service::-webkit-scrollbar-thumb {
+div.bg_content::-webkit-scrollbar-thumb {
   border-radius: 8px;
   background-color: #ede4d6;
 }
 
-div.bg_bibrefs_service::-webkit-scrollbar-track {
+div.bg_content::-webkit-scrollbar-track {
   -webkit-box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
   border-radius: 6px;
   background-color: #f9f9fd;
