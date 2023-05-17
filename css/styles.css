@@ -28,6 +28,12 @@
 	margin-bottom: 0.5em;
 }
 
+.bg-calendar-widget summary {
+	margin: 0;
+	padding: 0;
+}
+
+
 .bg-calendar-widget .calendar .icon {
 	margin-bottom: 0.6em;
 }

@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 3.0.2
+    Version: 3.1
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '3.0.2');
+define('BG_CALENDAR_WIDGET_VERSION', '3.1');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -150,8 +150,8 @@ class bgCalendarWidget extends WP_Widget {
 		list($y, $m, $d) = explode('-', $date);
 		$y = (int)$y; 
 		$wd = date("N",strtotime($date));
-		$tone = bg_getTone($date);
-		$easter = bg_get_easter($y);
+		$tone = $this->bg_getTone($date);
+		$easter = $this->bg_get_easter($y);
 
 		$dd = ($y-$y%100)/100 - ($y-$y%400)/400 - 2;
 		$old = date("Y-m-d",strtotime ($date.' - '.$dd.' days')) ;
@@ -340,7 +340,7 @@ class bgCalendarWidget extends WP_Widget {
 	private function bg_get_calendar_data ($date='') {
 		$json = '';
 		$the_key = 'calendar_data_'.$date;
-		if(false===($json=get_transient($the_key)) || WORSHIPS_DRBUG_DATA) {
+//		if(false===($json=get_transient($the_key))) {
 			$response = wp_remote_get( 'https://azbyka.ru/worships/calendar/api/'.$date, ['timeout' => 120,]);
 			// Проверим на ошибки
 			if ( is_wp_error( $response ) ) {
@@ -349,7 +349,7 @@ class bgCalendarWidget extends WP_Widget {
 			}
 			$json = wp_remote_retrieve_body($response);
 			set_transient( $the_key, $json, 24*HOUR_IN_SECONDS );
-		}
+//		}
 		return $json;
 	}
 
@@ -599,7 +599,7 @@ class bgCalendarWidget extends WP_Widget {
 		$diff = $this->easter_diff($date);
 		$wd = date("N",strtotime($date))+0; 
 		$w = date("w",strtotime($date))+1; 
-		$voice = $this->getVoice($date);
+		$voice = $this->bg_getTone($date);
 		
 	// Постная триодь
 		if ($diff ==  -70) {			// Неделя о мытаре и фарисее
@@ -661,8 +661,10 @@ class bgCalendarWidget extends WP_Widget {
 		Функция возвращает глас по Октоиху для указанной даты
 		Параметры:
 			$date - дата в формате Y-m-d
+		Возвращает:
+			Глас по Октоиху	
 	*******************************************************************************/  
-	private function getVoice($date) {
+	private function bg_getTone($date) {
 		list($year, $m, $d) = explode ('-', $date);
 		$num = $this->easter_diff($date, $year);
 		if ($num < 0) {									// Если дата раньше Пасхи этого года,
@@ -674,13 +676,38 @@ class bgCalendarWidget extends WP_Widget {
 	}
 
 	/*******************************************************************************
+		Функция определяет день Пасхи или переходящий праздник в указанном году
+		Параметры:
+			$year - год в формате Y
+			$shift - смещение даты относительно Пасхи (переходящий праздник)
+					по умолчанию $shift=0 - день Пасхи
+		Возвращает:
+			Дату Пасхи или переходящий праздник в формате Y-m-d	
+	*******************************************************************************/
+	private function bg_get_easter($year, $shift=0) {
+		$year = (int) $year;
+		$a=((19*($year%19)+15)%30);
+		$b=((2*($year%4)+4*($year%7)+6*$a+6)%7);
+		if ($a+$b>9) {
+			$day=$a+$b-9;
+			$month=4;
+		} else {
+			$day=22+$a+$b;
+			$month=3;
+		}
+		$dd = bg_ddif($year);
+		
+		return date( 'Y-m-d', mktime ( 0, 0, 0, $month, $day+$dd+intval($shift), intval($year) ) );
+	}
+
+	/*******************************************************************************
 		Функция возвращает количество дней между Пасхой и указанной датой по новому стилю
 		Параметры:
 			$date - дата в формате Y-m-d
 	*******************************************************************************/  
 	private function easter_diff($date, $year=0) {
 		if (!$year) list($year, $m, $d) = explode ('-', $date);
-		$interval = date_diff(date_create(bg_get_easter($year)), date_create($date));
+		$interval = date_diff(date_create($this->bg_get_easter($year)), date_create($date));
 		return (int)$interval->format('%R%a');
 	}
 
