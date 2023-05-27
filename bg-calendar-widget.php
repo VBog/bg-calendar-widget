@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 3.1
+    Version: 3.1.1
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '3.1');
+define('BG_CALENDAR_WIDGET_VERSION', '3.1.1');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -174,9 +174,9 @@ class bgCalendarWidget extends WP_Widget {
 			</div>
 		<?php endif; ?>
 		<!-- Дата по новому стилю -->
-			<h3<?php echo (($wd==7)?' style=" color:red"':""); ?>><?php echo $weekday[$wd-1].', '. sprintf (_('%1$d %2$s %3$d г.'), (int)$d , $monthes[$m-1] , (int)$y); ?><br>
+			<h3<?php echo (($wd==7)?' style=" color:red"':""); ?>><?php echo $weekday[$wd-1].', '. sprintf (_('%1$d %2$s %3$d г.'), (int)$d , $monthes[$m-1] , (int)$y); ?></h3>
 		<!-- и по старому стилю -->
-			<?php echo '('.sprintf (_('%1$d %2$s ст.ст.'), (int)$old_d, $monthes[$old_m-1]).')'; ?></h3>
+			<p<?php echo (($wd==7)?' style=" color:red"':""); ?>><?php echo '('.sprintf (_('%1$d %2$s ст.ст.'), (int)$old_d, $monthes[$old_m-1]).')'; ?></p>
 		<!-- Название седмицы/Недели -->
 			<h4<?php echo (($wd==7)?' style=" color:red"':""); ?>><?php echo $data['sedmica']; ?></h4>
 		<!-- Глас, пост, пища -->
@@ -615,7 +615,7 @@ class bgCalendarWidget extends WP_Widget {
 		} else if ($diff ==  -49) {	// В неделю сыропустную
 			return 'sluzhby-predugotovitelnyh-sedmits/#0_21">Постная триодь. В неделю сыропустную';
 		} else if ($diff < -49) {	// Предуготовительные седмицы
-			return 'oktoih/'.($voice+1).'">Октоих. Глас '.$this->getVoice($date);
+			return 'oktoih/'.($voice+1).'">Октоих. Глас '.$this->bg_getTone($date);
 		} else if ($diff < -41) {	// Великий пост 1-я седмица
 			return 'sluzhby-pervoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 1&nbsp;седмица';
 		} else if ($diff < -34) {	// Великий пост 2-я седмица
@@ -653,7 +653,7 @@ class bgCalendarWidget extends WP_Widget {
 
 	// Октоих 
 		} else {
-			return 'oktoih/'.($voice+1).'">Октоих. Глас '.$this->getVoice($date);
+			return 'oktoih/'.($voice+1).'">Октоих. Глас '.$this->bg_getTone($date);
 		}
 	}
 
