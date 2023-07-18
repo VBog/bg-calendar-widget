@@ -16,17 +16,18 @@ document.addEventListener('DOMContentLoaded', function(){
 				var xhr = new XMLHttpRequest();
 				xhr.open("POST", url, false);
 				xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+				var desc = el.getAttribute('data-desc');
+				document.getElementById("bg_desc_content").innerHTML = '<hr><div class="bg_hide_block"><input id="bg_hide_block1" type="button" value="&#215;" title="Скрыть"></div><div id="bg_desc_text"></div>';
 				xhr.onreadystatechange = function() {
 					if (this.readyState != 4) return;
-					document.getElementById("bg_desc_text").innerHTML = xhr.responseText;
+					document.getElementById("bg_desc_text").innerHTML = xhr.responseText+'<br>';
 					// Очистить div с текстом Библии
 					document.getElementById("bg_hide_block1").addEventListener('click', function() {
 						event.preventDefault();
-						document.getElementById("bg_desc_text").innerHTML='';
+						document.getElementById("bg_desc_content").innerHTML='';
 					}, false);
 					return false;
 				}
-				var desc = el.getAttribute('data-desc');
 				xhr.send("desc="+desc);
 			},
 			false
@@ -37,22 +38,30 @@ document.addEventListener('DOMContentLoaded', function(){
 	var els2 = document.getElementsByClassName("bg_bibleRef");
 	Array.prototype.forEach.call(els2, function(el) {
 		el.addEventListener("click",
-			function() {
+			function(e) {
 				var url="https://azbyka.ru/worships/calendar/api/bible.php";
 				var xhr = new XMLHttpRequest();
 				xhr.open("POST", url, false);
 				xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+				var ref = el.innerText;
+				var href = el.getAttribute("data-ref");
+				var hlink = '';
+				if (href) {
+					href = "'https://azbyka.ru/biblia/?"+href+"'";
+					hlink = '<input id="bg_hlink" type="button" value="Перейти на Библию" title="Перейти на Библию" onclick="location.href='+href+';">';
+				}
+				document.getElementById("bg_bible_content").innerHTML = '<hr><div class="bg_hide_block">'+hlink +
+					'<input id="bg_hide_block2" type="button" value="&#215;" title="Скрыть"></div><div id="bg_bible_text"></div>';
 				xhr.onreadystatechange = function() {
 					if (this.readyState != 4) return;
-					document.getElementById("bg_bible_text").innerHTML = xhr.responseText;
+					document.getElementById("bg_bible_text").innerHTML = xhr.responseText+'<br>';
 					// Очистить div с текстом Библии
 					document.getElementById("bg_hide_block2").addEventListener('click', function() {
 						event.preventDefault();
-						document.getElementById("bg_bible_text").innerHTML='';
+						document.getElementById("bg_bible_content").innerHTML='';
 					}, false);
 					return false;
 				}
-				var ref = el.innerText;
 				xhr.send("ref="+ref);
 			},
 			false

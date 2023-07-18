@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря ("Азбука веры")
-    Version: 3.1.1
+    Version: 3.2.0
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '3.1.1');
+define('BG_CALENDAR_WIDGET_VERSION', '3.2.0');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -64,6 +64,8 @@ if ( !is_admin() ) {
 ******************************************************************************************/
 class bgCalendarWidget extends WP_Widget {
  
+	private $hlinks = false;
+	
 	// создание виджета
 	function __construct() {
 		parent::__construct(
@@ -75,6 +77,8 @@ class bgCalendarWidget extends WP_Widget {
  
 	// фронтэнд виджета
 	public function widget( $args, $instance ) {
+		if (isset($instance['links']) && $instance['links'] ) $this->hlinks = $instance['links'];
+		
 		$title = apply_filters( 'widget_title', $instance['title'] ); // к заголовку применяем фильтр (необязательно)
  
 		echo $args['before_widget'];
@@ -212,7 +216,7 @@ class bgCalendarWidget extends WP_Widget {
 		</div>
 		<?php if (isset($instance['descriptions']) && $instance['descriptions'] ) : ?>
 	<!-- Текст Жития -->
-		<div id="bg_desc_text"></div>
+		<div id="bg_desc_content"></div>
 		<?php 
 		endif;
 	/*******************************************************
@@ -259,7 +263,7 @@ class bgCalendarWidget extends WP_Widget {
 		?>
 		</div>
 		<!-- Текст Библии -->
-		<div id="bg_bible_text"></div>
+		<div id="bg_bible_content"></div>
 
 
 		<?php 
@@ -340,7 +344,7 @@ class bgCalendarWidget extends WP_Widget {
 	private function bg_get_calendar_data ($date='') {
 		$json = '';
 		$the_key = 'calendar_data_'.$date;
-//		if(false===($json=get_transient($the_key))) {
+		if(false===($json=get_transient($the_key)) || BG_CALENDAR_WIDGET_DEBUG) {
 			$response = wp_remote_get( 'https://azbyka.ru/worships/calendar/api/'.$date, ['timeout' => 120,]);
 			// Проверим на ошибки
 			if ( is_wp_error( $response ) ) {
@@ -349,7 +353,7 @@ class bgCalendarWidget extends WP_Widget {
 			}
 			$json = wp_remote_retrieve_body($response);
 			set_transient( $the_key, $json, 24*HOUR_IN_SECONDS );
-//		}
+		}
 		return $json;
 	}
 
@@ -370,12 +374,14 @@ class bgCalendarWidget extends WP_Widget {
 			(!empty($readings['apostle'])?('<i>'._("Лит.").': '._("Ап.").'-</i> '.$this->blink ($readings['apostle']).' '):'').
 			(!empty($readings['gospel'])?('<i>'._("Ев.").'-</i> '.$this->blink ($readings['gospel']).' '):'').
 			($evening && !empty($readings['evening'])?('<i>'._("Веч.").':</i> '.$this->blink ($readings['evening']).' '):'');
+
 		echo $text?('<p>'.(!empty($readings['title'])?('<i>'.$readings['title'].':</i> '):'').$text.'</p>'):'';
 	}
 	// Вечера
 	private function bg_printEvReadings ($readings) {
 		if (empty($readings)) return;
 		$text = (!empty($readings['evening'])?('<i>'._("Веч.").':</i> '.$this->blink ($readings['evening']).' '):'');
+
 		echo $text?('<p>'.(!empty($readings['title'])?('<i>'.$readings['title'].':</i> '):'').$text.'</p>'):'';
 	}
 
@@ -583,7 +589,7 @@ class bgCalendarWidget extends WP_Widget {
 			$book = $bg_bibrefs_translate[$abbr];	// Перевод названия книги
 			
 			// Формируем ссылки на Писание
-			$hlink .= '<span class="bg_bibleRef" title="'._("Показать текст").'">'.$book.'.'.$ch.'</span>; ';
+			$hlink .= '<span class="bg_bibleRef" data-ref="'.($this->hlinks?($abbr.'.'.$ch):'').'" title="'._("Показать текст").'">'.$book.'.'.$ch.'</span>; ';
 		}
 		$hlink = substr($hlink,0,-2);
 		return $hlink;
@@ -695,7 +701,7 @@ class bgCalendarWidget extends WP_Widget {
 			$day=22+$a+$b;
 			$month=3;
 		}
-		$dd = bg_ddif($year);
+		$dd = ($year-$year%100)/100 - ($year-$year%400)/400 - 2;
 		
 		return date( 'Y-m-d', mktime ( 0, 0, 0, $month, $day+$dd+intval($shift), intval($year) ) );
 	}
