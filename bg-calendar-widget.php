@@ -2,8 +2,8 @@
 /* 
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
-    Description: Виджет православного календаря ("Азбука веры")
-    Version: 3.2.0
+    Description: Виджет православного календаря 
+    Version: 3.2.2
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '3.2.0');
+define('BG_CALENDAR_WIDGET_VERSION', '3.2.2');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -163,7 +163,7 @@ class bgCalendarWidget extends WP_Widget {
 
 		$json = $this->bg_get_calendar_data($date);
 		$data = json_decode($json, true);
-
+//print_dump('data', $data);
 		$tomorrow = date ('Y-m-d', strtotime($date.'+ 1 days'));
 		$json_tomorrow = $this->bg_get_calendar_data($tomorrow);
 		$data_tomorrow = json_decode($json_tomorrow, true);
@@ -344,11 +344,11 @@ class bgCalendarWidget extends WP_Widget {
 	private function bg_get_calendar_data ($date='') {
 		$json = '';
 		$the_key = 'calendar_data_'.$date;
-		if(false===($json=get_transient($the_key)) || BG_CALENDAR_WIDGET_DEBUG) {
+		if(false===($json=get_transient($the_key)) || BG_CALENDAR_WIDGET_DEBUG || WP_DEBUG) {
 			$response = wp_remote_get( 'https://azbyka.ru/worships/calendar/api/'.$date, ['timeout' => 120,]);
 			// Проверим на ошибки
 			if ( is_wp_error( $response ) ) {
-				error_log($date.' '.$response->get_error_message().PHP_EOL, 3, WORSHIPS_LOG);
+				error_log($date.' '.$response->get_error_message().PHP_EOL, 3, BG_CALENDAR_WIDGET_LOG);
 				return '';
 			}
 			$json = wp_remote_retrieve_body($response);
@@ -605,7 +605,7 @@ class bgCalendarWidget extends WP_Widget {
 		$diff = $this->easter_diff($date);
 		$wd = date("N",strtotime($date))+0; 
 		$w = date("w",strtotime($date))+1; 
-		$voice = $this->bg_getTone($date);
+		$tone = $this->bg_getTone($date);
 		
 	// Постная триодь
 		if ($diff ==  -70) {			// Неделя о мытаре и фарисее
@@ -621,7 +621,7 @@ class bgCalendarWidget extends WP_Widget {
 		} else if ($diff ==  -49) {	// В неделю сыропустную
 			return 'sluzhby-predugotovitelnyh-sedmits/#0_21">Постная триодь. В неделю сыропустную';
 		} else if ($diff < -49) {	// Предуготовительные седмицы
-			return 'oktoih/'.($voice+1).'">Октоих. Глас '.$this->bg_getTone($date);
+			return 'oktoih/'.($tone+1).'">Октоих. Глас '.$this->bg_getTone($date);
 		} else if ($diff < -41) {	// Великий пост 1-я седмица
 			return 'sluzhby-pervoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 1&nbsp;седмица';
 		} else if ($diff < -34) {	// Великий пост 2-я седмица
@@ -659,7 +659,7 @@ class bgCalendarWidget extends WP_Widget {
 
 	// Октоих 
 		} else {
-			return 'oktoih/'.($voice+1).'">Октоих. Глас '.$this->bg_getTone($date);
+			return 'oktoih/'.($tone+1).'">Октоих. Глас '.$this->bg_getTone($date);
 		}
 	}
 
@@ -676,9 +676,9 @@ class bgCalendarWidget extends WP_Widget {
 		if ($num < 0) {									// Если дата раньше Пасхи этого года,
 			$num = $this->easter_diff($date, $year-1);	// то отсчитываем от предыдущей Пасхи
 		}
-		if ($num < 7) $voice = $num+1;
-		else $voice = floor(($num-7)/7)%8+1;
-		return $voice;
+		if ($num < 7) $tone = $num+1;
+		else $tone = floor(($num-7)/7)%8+1;
+		return $tone;
 	}
 
 	/*******************************************************************************

@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function(){
 				var hlink = '';
 				if (href) {
 					href = "'https://azbyka.ru/biblia/?"+href+"'";
-					hlink = '<input id="bg_hlink" type="button" value="Перейти на Библию" title="Перейти на Библию" onclick="location.href='+href+';">';
+					hlink = '<input id="bg_hlink" type="button" value="Перейти на Библию" title="Перейти на Библию" onclick="window.open('+href+');">';
 				}
 				document.getElementById("bg_bible_content").innerHTML = '<hr><div class="bg_hide_block">'+hlink +
 					'<input id="bg_hide_block2" type="button" value="&#215;" title="Скрыть"></div><div id="bg_bible_text"></div>';
