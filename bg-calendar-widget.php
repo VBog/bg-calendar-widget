@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря 
-    Version: 3.2.2
+    Version: 3.2.3
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '3.2.2');
+define('BG_CALENDAR_WIDGET_VERSION', '3.2.3');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -163,7 +163,7 @@ class bgCalendarWidget extends WP_Widget {
 
 		$json = $this->bg_get_calendar_data($date);
 		$data = json_decode($json, true);
-//print_dump('data', $data);
+
 		$tomorrow = date ('Y-m-d', strtotime($date.'+ 1 days'));
 		$json_tomorrow = $this->bg_get_calendar_data($tomorrow);
 		$data_tomorrow = json_decode($json_tomorrow, true);
@@ -228,7 +228,7 @@ class bgCalendarWidget extends WP_Widget {
 		<div class='readings'>
 		<?php
 	// Тип литургии 
-		$liturgy = [_("Нет литургии.") ,_("Литургия свт. Иоанна Златоуста."), _("Литургия свт. Василия Великого."), _("Литургия Преждеосвященных Даров.")];
+		$liturgy = [_("Нет литургии.") ,_("Литургия свт. Иоанна Златоуста."), _("Литургия свт. Василия Великого."), _("Литургия Преждеосвященных Даров."), _("Литургия Преждеосвященных Даров возможна только ради полиелея.")];
 		echo '<p><i>'.$liturgy[$data['liturgy']].'</i></p>';
 
 	// Список чтений дня
