@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря 
-    Version: 3.2.3
+    Version: 3.2.4
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '3.2.3');
+define('BG_CALENDAR_WIDGET_VERSION', '3.2.4');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -178,9 +178,9 @@ class bgCalendarWidget extends WP_Widget {
 			</div>
 		<?php endif; ?>
 		<!-- Дата по новому стилю -->
-			<h3<?php echo (($wd==7)?' style=" color:red"':""); ?>><?php echo $weekday[$wd-1].', '. sprintf (_('%1$d %2$s %3$d г.'), (int)$d , $monthes[$m-1] , (int)$y); ?></h3>
+			<h3<?php echo (($wd==7)?' style=" color:red"':""); ?>><?php echo $weekday[$wd-1].', '. sprintf (_('%1$d&nbsp;%2$s&nbsp;%3$d&nbsp;г.'), (int)$d , $monthes[$m-1] , (int)$y); ?></h3>
 		<!-- и по старому стилю -->
-			<p<?php echo (($wd==7)?' style=" color:red"':""); ?>><?php echo '('.sprintf (_('%1$d %2$s ст.ст.'), (int)$old_d, $monthes[$old_m-1]).')'; ?></p>
+			<p<?php echo (($wd==7)?' style=" color:red"':""); ?>><?php echo '('.sprintf (_('%1$d&nbsp;%2$s&nbsp;ст.ст.'), (int)$old_d, $monthes[$old_m-1]).')'; ?></p>
 		<!-- Название седмицы/Недели -->
 			<h4<?php echo (($wd==7)?' style=" color:red"':""); ?>><?php echo $data['sedmica']; ?></h4>
 		<!-- Глас, пост, пища -->
