@@ -3,7 +3,7 @@
     Plugin Name: Bg Calendar Widget
     Plugin URI: https://bogaiskov.ru
     Description: Виджет православного календаря 
-    Version: 3.2.4
+    Version: 3.2.5
     Author: VBog
     Author URI: https://bogaiskov.ru 
 	License:     GPL2
@@ -37,7 +37,7 @@
 if ( !defined('ABSPATH') ) {
 	die( 'Sorry, you are not allowed to access this page directly.' ); 
 }
-define('BG_CALENDAR_WIDGET_VERSION', '3.2.4');
+define('BG_CALENDAR_WIDGET_VERSION', '3.2.5');
 
 define('BG_CALENDAR_WIDGET_DEBUG', false);
 
@@ -321,8 +321,10 @@ class bgCalendarWidget extends WP_Widget {
 			<hr>
 			<a class="hlink" href="https://azbyka.ru/bogosluzhebnye-ukazaniya?date=<?php echo $date; ?>" target="_blank">Богослужебные указания&nbsp;►</a>
 			<a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/tipikon/48/#48_<?php echo $tip48[$old_m-1].'_'.$old_d; ?>" target="_blank">Типикон, <?php echo $old_d.'&nbsp;'.$monthes[$old_m-1]; ?>&nbsp;►</a>
-			<a class="calVoice hlink" target="_blank" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/<?php echo $this->worships($date).', '.$wday[$wd-1]; ?>&nbsp;►</a>
-			
+			<a class="calVoice hlink" target="_blank" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/<?php echo $this->octoich($date).', '.$wday[$wd-1]; ?>&nbsp;►</a>
+			<?php if ($triod = $this->worships($date)) : ?>
+				<a class="calVoice hlink" target="_blank" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/<?php echo $triod.', '.$wday[$wd-1]; ?>&nbsp;►</a>
+			<?php endif; ?>
 			<?php if (!empty($mantle[$old_m-1])) { ?>
 				<a class="hlink" href="https://azbyka.ru/otechnik/Pravoslavnoe_Bogosluzhenie/mineja-<?php echo $mantle[$old_m-1].'/'.$old_d; ?>" target="_blank">Минея, <?php echo $old_d.'&nbsp;'.$monthes[$old_m-1]; ?>&nbsp;►</a>
 			<?php } ?>
@@ -597,7 +599,18 @@ class bgCalendarWidget extends WP_Widget {
 	
 
 	/*******************************************************************************
-		Функция возвращает ссылки на службы в течение года
+		Функция возвращает ссылки на Октоих в течение года
+		Параметры:
+			$date - дата в формате Y-m-d
+	*******************************************************************************/  
+	private function octoich ($date) {
+		$tone = $this->bg_getTone($date);
+
+		return 'oktoih/'.($tone+1).'">Октоих. Глас '.$this->bg_getTone($date);
+	}
+		
+	/*******************************************************************************
+		Функция возвращает ссылки на службы Триодей в течение года
 		Параметры:
 			$date - дата в формате Y-m-d
 	*******************************************************************************/  
@@ -605,8 +618,8 @@ class bgCalendarWidget extends WP_Widget {
 		$diff = $this->easter_diff($date);
 		$wd = date("N",strtotime($date))+0; 
 		$w = date("w",strtotime($date))+1; 
-		$tone = $this->bg_getTone($date);
 		
+
 	// Постная триодь
 		if ($diff ==  -70) {			// Неделя о мытаре и фарисее
 			return 'sluzhby-predugotovitelnyh-sedmits/#0_1">Постная триодь. Неделя о мытаре и фарисее';
@@ -616,12 +629,10 @@ class bgCalendarWidget extends WP_Widget {
 			return 'sluzhby-predugotovitelnyh-sedmits/#0_9">Постная триодь. В субботу мясопустную';
 		} else if ($diff ==  -56) {	// Неделя мясопустная
 			return 'sluzhby-predugotovitelnyh-sedmits/#0_13">Постная триодь. Неделя мясопустная';
-		} else if ($diff ==  -50) {	// В субботу сырную
-			return 'sluzhby-predugotovitelnyh-sedmits/#0_17">Постная триодь. В субботу сырную';
-		} else if ($diff ==  -49) {	// В неделю сыропустную
-			return 'sluzhby-predugotovitelnyh-sedmits/#0_21">Постная триодь. В неделю сыропустную';
-		} else if ($diff < -49) {	// Предуготовительные седмицы
-			return 'oktoih/'.($tone+1).'">Октоих. Глас '.$this->bg_getTone($date);
+		} else if ($diff < -56) {	// Период Октоиха
+			return '';
+		} else if ($diff < -48) {	// Сырная седмица
+			return 'sluzhby-syrnoj-sedmicy-velikogo-posta/'.$wd.'">Постная триодь. Сырная седмица';
 		} else if ($diff < -41) {	// Великий пост 1-я седмица
 			return 'sluzhby-pervoj-sedmitsy-velikogo-posta/'.$wd.'">Постная триодь. 1&nbsp;седмица';
 		} else if ($diff < -34) {	// Великий пост 2-я седмица
@@ -657,10 +668,8 @@ class bgCalendarWidget extends WP_Widget {
 		} else if ($diff ==  56) {	// День всех Святых
 			return 'sluzhby-vosmoj-sedmitsy-po-pashe/8">Цветная триодь. День всех Святых';
 
-	// Октоих 
-		} else {
-			return 'oktoih/'.($tone+1).'">Октоих. Глас '.$this->bg_getTone($date);
-		}
+	// Период Октоиха 
+		} else return '';
 	}
 
 	/*******************************************************************************
